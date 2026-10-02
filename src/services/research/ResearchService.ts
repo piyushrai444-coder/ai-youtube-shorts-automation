@@ -16,8 +16,10 @@ export class ResearchService {
       const primary = config.research.provider;
       if (primary === 'searchapi' && config.research.searchApiKey) {
         this.providers = [searchApiProvider, rssResearchProvider];
-      } else {
+      } else if (config.research.searchApiKey) {
         this.providers = [rssResearchProvider, searchApiProvider];
+      } else {
+        this.providers = [rssResearchProvider];
       }
     }
   }
