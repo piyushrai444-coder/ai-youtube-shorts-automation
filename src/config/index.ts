@@ -34,7 +34,7 @@ export const config = {
   llm: {
     provider: (process.env.LLM_PROVIDER || 'gemini').toLowerCase(),
     apiKey: process.env.LLM_API_KEY || process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY || '',
-    model: process.env.LLM_MODEL || 'gemini-1.5-flash',
+    model: process.env.LLM_MODEL || 'gemini-3.8-flash',
   },
 
   research: {

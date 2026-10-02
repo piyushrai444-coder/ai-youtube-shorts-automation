@@ -13,7 +13,7 @@ export class GeminiProvider implements LLMProvider {
     if (key) {
       this.client = new GoogleGenerativeAI(key);
     }
-    this.modelName = modelName || config.llm.model || 'gemini-1.5-flash';
+    this.modelName = modelName || config.llm.model || 'gemini-3.8-flash';
   }
 
   async selectBestTopic(topics: ResearchResult[]): Promise<ResearchResult> {
