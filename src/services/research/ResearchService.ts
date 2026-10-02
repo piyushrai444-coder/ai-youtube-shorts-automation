@@ -70,11 +70,35 @@ export class ResearchService {
       // Check database for duplicates
       const existingByHash = await topicRepository.findByHash(item.contentHash);
       if (existingByHash) {
+        if (existingByHash.used === false) {
+          uniqueCandidates.push({
+            title: existingByHash.title,
+            source: existingByHash.source,
+            sourceUrl: existingByHash.sourceUrl,
+            publishedAt: existingByHash.publishedAt || existingByHash.discoveredAt,
+            summary: existingByHash.summary,
+            category: existingByHash.category,
+            score: existingByHash.score,
+            contentHash: existingByHash.contentHash,
+          });
+        }
         continue;
       }
 
       const existingByUrl = await topicRepository.findBySourceUrl(item.sourceUrl);
       if (existingByUrl) {
+        if (existingByUrl.used === false) {
+          uniqueCandidates.push({
+            title: existingByUrl.title,
+            source: existingByUrl.source,
+            sourceUrl: existingByUrl.sourceUrl,
+            publishedAt: existingByUrl.publishedAt || existingByUrl.discoveredAt,
+            summary: existingByUrl.summary,
+            category: existingByUrl.category,
+            score: existingByUrl.score,
+            contentHash: existingByUrl.contentHash,
+          });
+        }
         continue;
       }
 
@@ -87,7 +111,31 @@ export class ResearchService {
       }
     }
 
-    logger.job(jobId || 'sys', `Research completed: ${uniqueCandidates.length} new unique topics added`);
+    // If all candidates in current batch were already marked used, fetch any unused candidates from database
+    if (uniqueCandidates.length === 0) {
+      logger.job(jobId || 'sys', 'Querying unused candidate topics from database...');
+      try {
+        const unused = await topicRepository.findUnused(15);
+        if (unused && unused.length > 0) {
+          for (const t of unused) {
+            uniqueCandidates.push({
+              title: t.title,
+              source: t.source,
+              sourceUrl: t.sourceUrl,
+              publishedAt: t.publishedAt || t.discoveredAt,
+              summary: t.summary,
+              category: t.category,
+              score: t.score,
+              contentHash: t.contentHash,
+            });
+          }
+        }
+      } catch (err: any) {
+        logger.warn(`Could not fetch unused topics: ${err.message}`);
+      }
+    }
+
+    logger.job(jobId || 'sys', `Research completed: ${uniqueCandidates.length} candidate topics available`);
     return uniqueCandidates;
   }
 }

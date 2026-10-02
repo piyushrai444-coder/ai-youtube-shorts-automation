@@ -17,16 +17,10 @@ export class RssResearchProvider implements ResearchProvider {
 
   private feeds: RssFeedSource[] = [
     {
-      name: 'OpenAI News',
-      url: 'https://openai.com/news/rss.xml',
-      defaultCategory: 'AI Updates',
-      isOfficial: true,
-    },
-    {
-      name: 'Google AI Blog',
-      url: 'https://blog.google/technology/ai/rss/',
-      defaultCategory: 'AI Research',
-      isOfficial: true,
+      name: 'Hacker News AI',
+      url: 'https://hnrss.org/newest?q=AI+OR+LLM+OR+Claude+OR+Gemini+OR+OpenAI&points=20',
+      defaultCategory: 'AI Tools',
+      isOfficial: false,
     },
     {
       name: 'TechCrunch AI',
@@ -35,30 +29,37 @@ export class RssResearchProvider implements ResearchProvider {
       isOfficial: false,
     },
     {
-      name: 'VentureBeat AI',
-      url: 'https://venturebeat.com/category/ai/feed/',
-      defaultCategory: 'AI Tools',
-      isOfficial: false,
-    },
-    {
-      name: 'Hacker News AI',
-      url: 'https://hnrss.org/newest?q=AI+OR+LLM+OR+Claude+OR+Gemini+OR+OpenAI&points=30',
-      defaultCategory: 'AI Tools',
-      isOfficial: false,
-    },
-    {
       name: 'The Verge AI',
       url: 'https://www.theverge.com/rss/ai-artificial-intelligence/index.xml',
       defaultCategory: 'AI News',
+      isOfficial: false,
+    },
+    {
+      name: 'Google AI Blog',
+      url: 'https://blog.google/technology/ai/rss/',
+      defaultCategory: 'AI Research',
+      isOfficial: true,
+    },
+    {
+      name: 'OpenAI News',
+      url: 'https://openai.com/news/rss.xml',
+      defaultCategory: 'AI Updates',
+      isOfficial: true,
+    },
+    {
+      name: 'Ars Technica AI',
+      url: 'https://feeds.arstechnica.com/arstechnica/technology-lab',
+      defaultCategory: 'AI Tools',
       isOfficial: false,
     },
   ];
 
   constructor(customFeeds?: RssFeedSource[]) {
     this.parser = new Parser({
-      timeout: 10000,
+      timeout: 12000,
       headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; AIShortsBot/1.0; +https://example.com)',
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+        Accept: 'application/rss+xml, application/xml, text/xml, */*',
       },
     });
     if (customFeeds && customFeeds.length > 0) {
@@ -94,7 +95,7 @@ export class RssResearchProvider implements ResearchProvider {
           }
 
           const category = this.categorizeTopic(item.title, cleanSummary, feed.defaultCategory);
-          if (categoryFilter && category.toLowerCase() !== categoryFilter.toLowerCase()) {
+          if (categoryFilter && categoryFilter !== 'all' && categoryFilter !== 'AI Tools' && category.toLowerCase() !== categoryFilter.toLowerCase()) {
             continue;
           }
 
