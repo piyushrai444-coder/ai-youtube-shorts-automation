@@ -6,7 +6,7 @@ let prismaInstance: PrismaClient | null = null;
 export function getPrismaClient(): PrismaClient {
   if (!prismaInstance) {
     prismaInstance = new PrismaClient({
-      log: process.env.NODE_ENV === 'development' ? ['query', 'info', 'warn', 'error'] : ['error', 'warn'],
+      log: process.env.PRISMA_LOG_QUERIES === 'true' ? ['query', 'info', 'warn', 'error'] : ['warn', 'error'],
     });
   }
   return prismaInstance;

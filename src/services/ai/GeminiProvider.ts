@@ -13,7 +13,7 @@ export class GeminiProvider implements LLMProvider {
     if (key) {
       this.client = new GoogleGenerativeAI(key);
     }
-    this.modelName = modelName || config.llm.model || 'gemini-3.8-flash';
+    this.modelName = modelName || config.llm.model || 'gemini-3.5-flash-lite';
   }
 
   async selectBestTopic(topics: ResearchResult[]): Promise<ResearchResult> {
@@ -24,9 +24,18 @@ export class GeminiProvider implements LLMProvider {
       return topics[0];
     }
 
-    try {
-      const model = this.client.getGenerativeModel({ model: this.modelName });
-      const prompt = `You are a viral YouTube Shorts producer specializing in AI tools and technology.
+    const candidateModels = [
+      this.modelName,
+      'gemini-3.5-flash-lite',
+      'gemini-3.8-flash',
+      'gemini-3.7-flash',
+      'gemini-3.1-flash-lite',
+    ].filter((v, i, a) => a.indexOf(v) === i);
+
+    for (const modelToTry of candidateModels) {
+      try {
+        const model = this.client.getGenerativeModel({ model: modelToTry });
+        const prompt = `You are a viral YouTube Shorts producer specializing in AI tools and technology.
 Select the SINGLE best, most practical and interesting topic from this list for a 30-second YouTube Short.
 
 Criteria:
@@ -39,18 +48,19 @@ ${topics.map((t, idx) => `[${idx}] Title: ${t.title} | Source: ${t.source} | Sum
 
 Respond with ONLY the integer index of the selected topic inside brackets like [0].`;
 
-      const result = await model.generateContent(prompt);
-      const text = result.response.text();
-      const match = text.match(/\[(\d+)\]/);
-      if (match) {
-        const index = parseInt(match[1], 10);
-        if (index >= 0 && index < topics.length) {
-          logger.info(`Gemini selected topic index ${index}: "${topics[index].title}"`);
-          return topics[index];
+        const result = await model.generateContent(prompt);
+        const text = result.response.text();
+        const match = text.match(/\[(\d+)\]/);
+        if (match) {
+          const index = parseInt(match[1], 10);
+          if (index >= 0 && index < topics.length) {
+            logger.info(`Gemini (${modelToTry}) selected topic index ${index}: "${topics[index].title}"`);
+            return topics[index];
+          }
         }
+      } catch (err: any) {
+        logger.warn(`Gemini selectBestTopic with "${modelToTry}" failed: ${err.message}. Trying next model...`);
       }
-    } catch (err: any) {
-      logger.warn(`Gemini selectBestTopic failed, falling back to top scored: ${err.message}`);
     }
 
     return topics[0];
@@ -60,13 +70,6 @@ Respond with ONLY the integer index of the selected topic inside brackets like [
     if (!this.client) {
       throw new Error('Gemini API key is not configured');
     }
-
-    const model = this.client.getGenerativeModel({
-      model: this.modelName,
-      generationConfig: {
-        responseMimeType: 'application/json',
-      },
-    });
 
     const cta = input.defaultCta || config.branding.defaultCta;
     const channelName = input.channelName || config.branding.channelName;
@@ -102,8 +105,40 @@ Return ONLY a JSON object matching this schema:
   "description": "Short YouTube description with hashtags and source credit: ${input.sourceUrl}"
 }`;
 
-    const response = await model.generateContent(prompt);
-    const text = response.response.text();
+    const candidateModels = [
+      this.modelName,
+      'gemini-3.5-flash-lite',
+      'gemini-3.8-flash',
+      'gemini-3.7-flash',
+      'gemini-3.1-flash-lite',
+    ].filter((v, i, a) => a.indexOf(v) === i);
+
+    let lastError: any = null;
+    let text = '';
+
+    for (const modelToTry of candidateModels) {
+      try {
+        const model = this.client.getGenerativeModel({
+          model: modelToTry,
+          generationConfig: {
+            responseMimeType: 'application/json',
+          },
+        });
+        const response = await model.generateContent(prompt);
+        text = response.response.text();
+        if (text) {
+          logger.info(`Generated script successfully using model "${modelToTry}"`);
+          break;
+        }
+      } catch (err: any) {
+        lastError = err;
+        logger.warn(`Gemini generation with "${modelToTry}" failed (${err.message}). Trying fallback model...`);
+      }
+    }
+
+    if (!text) {
+      throw lastError || new Error('All Gemini candidate models failed to generate content');
+    }
 
     const parsed = JSON.parse(text);
     const fullScript = `${parsed.hook} ${parsed.explanation} ${parsed.benefit} ${parsed.cta}`.trim();
