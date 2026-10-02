@@ -39,6 +39,26 @@
       </div>
     </div>
 
+    <!-- AI Key Alert (if not configured) -->
+    <% if (typeof hasAiKey !== 'undefined' && !hasAiKey) { %>
+      <div class="mt-6 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-lg flex-shrink-0">
+            🤖
+          </div>
+          <div>
+            <h3 class="text-sm font-semibold text-indigo-300">Google Gemini API Key Required</h3>
+            <p class="text-xs text-indigo-200/70 mt-0.5">
+              The AI scriptwriter requires a Gemini API key (free at aistudio.google.com) or OpenAI key to synthesize 30-second scripts.
+            </p>
+          </div>
+        </div>
+        <a href="/admin/settings" class="px-4 py-2 text-xs font-semibold rounded-lg bg-indigo-600 text-white hover:bg-indigo-500 transition whitespace-nowrap text-center">
+          Enter AI API Key →
+        </a>
+      </div>
+    <% } %>
+
     <!-- YouTube Connection Alert (if not connected) -->
     <% if (!isYouTubeConnected) { %>
       <div class="mt-6 rounded-2xl bg-amber-500/10 border border-amber-500/30 p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">

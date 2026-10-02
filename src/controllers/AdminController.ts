@@ -18,6 +18,7 @@ export class AdminController {
       const recentJobs = await jobRepository.listRecent(5);
       const isYouTubeConnected = await youtubeService.auth.isConnected();
       const channelInfo = await youtubeService.auth.getStoredChannelInfo();
+      const hasAiKey = !!(config.llm.apiKey || (await settingRepository.getSecure('llm_api_key')));
 
       const success = req.query.success as string;
       const error = req.query.error as string;
@@ -29,6 +30,7 @@ export class AdminController {
         recentJobs,
         isYouTubeConnected,
         channelInfo,
+        hasAiKey,
         schedule: {
           short1: config.cron.short1Time,
           short2: config.cron.short2Time,
@@ -96,6 +98,11 @@ export class AdminController {
 
   async generateManual(req: Request, res: Response): Promise<void> {
     try {
+      const hasAiKey = !!(config.llm.apiKey || (await settingRepository.getSecure('llm_api_key')));
+      if (!hasAiKey) {
+        return res.redirect('/admin/settings?error=Please+configure+your+Google+Gemini+API+Key+(or+OpenAI+Key)+below+before+generating+Shorts.');
+      }
+
       const category = req.body.category as string;
       const result = await jobScheduler.triggerSlot('manual', category);
       logger.info(`Manual generation triggered: ${result.slotKey}`);
