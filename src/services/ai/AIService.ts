@@ -5,34 +5,49 @@ import { QualityChecker } from './QualityChecker.js';
 import { logger } from '../../utils/logger.js';
 import { config } from '../../config/index.js';
 
+import { settingRepository } from '../../repositories/SettingRepository.js';
+
 export class AIService {
-  private provider: LLMProvider;
+  private customProvider?: LLMProvider;
 
   constructor(customProvider?: LLMProvider) {
     if (customProvider) {
-      this.provider = customProvider;
+      this.customProvider = customProvider;
+    }
+  }
+
+  async getEffectiveProvider(): Promise<LLMProvider> {
+    if (this.customProvider) {
+      return this.customProvider;
+    }
+    const dbProvider = await settingRepository.get('llm_provider');
+    const dbModel = await settingRepository.get('llm_model');
+    const dbKey = await settingRepository.getSecure('llm_api_key');
+
+    const providerType = (dbProvider || config.llm.provider || 'gemini').toLowerCase();
+    const apiKey = dbKey || config.llm.apiKey;
+    const model = dbModel || config.llm.model;
+
+    if (providerType === 'openai') {
+      return new OpenAIProvider(apiKey, model);
     } else {
-      const providerType = config.llm.provider.toLowerCase();
-      if (providerType === 'openai') {
-        this.provider = new OpenAIProvider();
-      } else {
-        // default to Gemini
-        this.provider = new GeminiProvider();
-      }
+      return new GeminiProvider(apiKey, model);
     }
   }
 
   getProviderName(): string {
-    return this.provider.name;
+    return this.customProvider?.name || config.llm.provider;
   }
 
   async selectBestTopic(topics: ResearchResult[], jobId?: string): Promise<ResearchResult> {
-    logger.job(jobId || 'sys', `Selecting best topic from ${topics.length} candidates using ${this.provider.name}`);
-    return this.provider.selectBestTopic(topics);
+    const provider = await this.getEffectiveProvider();
+    logger.job(jobId || 'sys', `Selecting best topic from ${topics.length} candidates using ${provider.name}`);
+    return provider.selectBestTopic(topics);
   }
 
   async generateAndValidateScript(input: ScriptInput, jobId?: string): Promise<GeneratedScript> {
-    logger.job(jobId || 'sys', `Generating YouTube Short script for "${input.topicTitle}"`);
+    const provider = await this.getEffectiveProvider();
+    logger.job(jobId || 'sys', `Generating YouTube Short script for "${input.topicTitle}" using ${provider.name}`);
 
     let attempts = 0;
     const maxAttempts = 3;
@@ -42,7 +57,7 @@ export class AIService {
     while (attempts < maxAttempts) {
       attempts++;
       try {
-        const script = await this.provider.generateScript(input);
+        const script = await provider.generateScript(input);
         lastScript = script;
 
         const validation = QualityChecker.validate(script);

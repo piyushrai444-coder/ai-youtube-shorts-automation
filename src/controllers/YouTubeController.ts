@@ -2,11 +2,17 @@ import { Request, Response } from 'express';
 import { youtubeService } from '../services/youtube/YouTubeService.js';
 import { logger } from '../utils/logger.js';
 
+import { settingRepository } from '../repositories/SettingRepository.js';
+import { config } from '../config/index.js';
+
 export class YouTubeController {
   async showYouTubeSettings(req: Request, res: Response): Promise<void> {
     try {
       const isConnected = await youtubeService.auth.isConnected();
       const channelInfo = await youtubeService.auth.getStoredChannelInfo();
+      const dbClientId = await settingRepository.get('google_client_id');
+      const hasClientId = !!(config.youtube.clientId || dbClientId);
+      const hasClientSecret = !!(config.youtube.clientSecret || await settingRepository.getSecure('google_client_secret'));
       const success = req.query.success as string;
       const error = req.query.error as string;
 
@@ -14,6 +20,10 @@ export class YouTubeController {
         title: 'YouTube OAuth Connection',
         isConnected,
         channelInfo,
+        hasCredentials: hasClientId && hasClientSecret,
+        clientId: config.youtube.clientId || dbClientId || '',
+        redirectUri: config.youtube.redirectUri || `${config.appUrl}/admin/youtube/callback`,
+        appUrl: config.appUrl,
         success,
         error,
       });
@@ -23,14 +33,35 @@ export class YouTubeController {
         title: 'YouTube OAuth Connection',
         isConnected: false,
         channelInfo: null,
+        hasCredentials: false,
+        clientId: '',
+        redirectUri: `${config.appUrl}/admin/youtube/callback`,
+        appUrl: config.appUrl,
         error: err.message,
         success: null,
       });
     }
   }
 
+  async saveCredentials(req: Request, res: Response): Promise<void> {
+    try {
+      const { googleClientId, googleClientSecret } = req.body;
+      if (googleClientId && googleClientId.trim()) {
+        await settingRepository.set('google_client_id', googleClientId.trim());
+      }
+      if (googleClientSecret && googleClientSecret.trim()) {
+        await settingRepository.setSecure('google_client_secret', googleClientSecret.trim());
+      }
+      res.redirect('/admin/settings/youtube?success=Google+OAuth+credentials+saved+successfully!');
+    } catch (err: any) {
+      logger.error(`Error saving Google credentials: ${err.message}`);
+      res.redirect(`/admin/settings/youtube?error=${encodeURIComponent(err.message)}`);
+    }
+  }
+
   async connect(req: Request, res: Response): Promise<void> {
     try {
+      await youtubeService.auth.ensureCredentialsLoaded();
       const authUrl = youtubeService.auth.getAuthUrl();
       res.redirect(authUrl);
     } catch (err: any) {

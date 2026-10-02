@@ -8,32 +8,50 @@ import { config } from '../../config/index.js';
 import { logger } from '../../utils/logger.js';
 import { ffmpegService } from '../video/FFmpegService.js';
 
+import { settingRepository } from '../../repositories/SettingRepository.js';
+
 export class TTSService {
-  private provider: TTSProvider;
+  private customProvider?: TTSProvider;
 
   constructor(customProvider?: TTSProvider) {
     if (customProvider) {
-      this.provider = customProvider;
+      this.customProvider = customProvider;
+    }
+  }
+
+  async getEffectiveProvider(): Promise<TTSProvider> {
+    if (this.customProvider) {
+      return this.customProvider;
+    }
+    const dbProvider = await settingRepository.get('tts_provider');
+    const dbVoice = await settingRepository.get('tts_voice');
+    const dbKey = (await settingRepository.getSecure('tts_api_key')) || (await settingRepository.getSecure('llm_api_key'));
+
+    const type = (dbProvider || config.tts.provider || 'openai').toLowerCase();
+    const apiKey = dbKey || config.tts.apiKey;
+    const voice = dbVoice || config.tts.voice;
+
+    if (type === 'elevenlabs') {
+      return new ElevenLabsTTSProvider(apiKey);
     } else {
-      const type = config.tts.provider.toLowerCase();
-      if (type === 'elevenlabs') {
-        this.provider = new ElevenLabsTTSProvider();
-      } else {
-        this.provider = new OpenAITTSProvider();
-      }
+      return new OpenAITTSProvider(apiKey);
     }
   }
 
   getProviderName(): string {
-    return this.provider.name;
+    return this.customProvider?.name || config.tts.provider;
   }
 
   async generateVoiceover(text: string, jobId?: string): Promise<{ audioBuffer: Buffer; durationSeconds: number; localPath: string }> {
-    logger.job(jobId || 'sys', `Generating voiceover using ${this.provider.name}...`);
+    const provider = await this.getEffectiveProvider();
+    const dbVoice = await settingRepository.get('tts_voice');
+    const voice = dbVoice || config.tts.voice;
+
+    logger.job(jobId || 'sys', `Generating voiceover using ${provider.name}...`);
     let result: AudioResult;
 
     try {
-      result = await this.provider.generateSpeech(text);
+      result = await provider.generateSpeech(text, voice);
     } catch (err: any) {
       const isConfigOrNetworkError =
         err.message?.includes('API key') ||

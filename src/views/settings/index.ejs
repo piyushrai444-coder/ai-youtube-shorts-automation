@@ -66,7 +66,7 @@
           <div>
             <label class="block text-xs font-semibold text-slate-300 mb-1">LLM Provider</label>
             <select name="llmProvider" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:outline-none focus:border-indigo-500">
-              <option value="gemini" <%= (settings.db['llm_provider'] || settings.llm.provider) === 'gemini' ? 'selected' : '' %>>Google Gemini (Recommended)</option>
+              <option value="gemini" <%= (settings.db['llm_provider'] || settings.llm.provider) === 'gemini' ? 'selected' : '' %>>Google Gemini (Recommended / Free tier)</option>
               <option value="openai" <%= (settings.db['llm_provider'] || settings.llm.provider) === 'openai' ? 'selected' : '' %>>OpenAI (GPT-4o-mini)</option>
             </select>
           </div>
@@ -75,6 +75,12 @@
             <input type="text" name="llmModel" value="<%= settings.db['llm_model'] || settings.llm.model %>"
               class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:outline-none focus:border-indigo-500">
           </div>
+          <div class="sm:col-span-2">
+            <label class="block text-xs font-semibold text-slate-300 mb-1">LLM API Key (Gemini or OpenAI)</label>
+            <input type="password" name="llmApiKey" placeholder="<%= (settings.llm.apiKey || settings.db['llm_api_key']) ? '•••••••••••••••• (Configured - enter new key to change)' : 'AIzaSy... or sk-proj-...' %>"
+              class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm font-mono focus:outline-none focus:border-indigo-500">
+            <p class="text-[11px] text-slate-400 mt-1">Free Gemini API key available at <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-indigo-400 underline">Google AI Studio</a>.</p>
+          </div>
         </div>
       </div>
 
@@ -82,6 +88,13 @@
       <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6">
         <h2 class="text-base font-bold text-white mb-4">Voiceover TTS Settings</h2>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">TTS Provider</label>
+            <select name="ttsProvider" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:outline-none focus:border-indigo-500">
+              <option value="openai" <%= (settings.db['tts_provider'] || settings.tts.provider) === 'openai' ? 'selected' : '' %>>OpenAI TTS</option>
+              <option value="elevenlabs" <%= (settings.db['tts_provider'] || settings.tts.provider) === 'elevenlabs' ? 'selected' : '' %>>ElevenLabs</option>
+            </select>
+          </div>
           <div>
             <label class="block text-xs font-semibold text-slate-300 mb-1">Voice Profile</label>
             <select name="ttsVoice" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:outline-none focus:border-indigo-500">
@@ -92,8 +105,13 @@
               <option value="shimmer" <%= (settings.db['tts_voice'] || settings.tts.voice) === 'shimmer' ? 'selected' : '' %>>Shimmer (Expressive)</option>
             </select>
           </div>
+          <div class="sm:col-span-2">
+            <label class="block text-xs font-semibold text-slate-300 mb-1">TTS API Key (OpenAI or ElevenLabs)</label>
+            <input type="password" name="ttsApiKey" placeholder="<%= (settings.tts.apiKey || settings.db['tts_api_key']) ? '•••••••••••••••• (Configured - enter new key to change)' : 'sk-proj-... or xi-api-key...' %>"
+              class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm font-mono focus:outline-none focus:border-indigo-500">
+          </div>
 
-          <div class="flex items-center gap-3 pt-6">
+          <div class="sm:col-span-2 flex items-center gap-3 pt-2">
             <input type="checkbox" id="musicToggle" name="enableBackgroundMusic"
               <%= (settings.db['enable_background_music'] === 'true' || settings.branding.enableBackgroundMusic) ? 'checked' : '' %>
               class="w-4 h-4 rounded border-slate-700 text-indigo-600 focus:ring-indigo-500 bg-slate-950">

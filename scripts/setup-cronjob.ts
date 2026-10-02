@@ -36,8 +36,27 @@ export async function createCronJobs(params: CronJobSetupParams): Promise<void> 
     },
   ];
 
+  // Fetch existing jobs to avoid duplicates
+  let existingJobs: any[] = [];
+  try {
+    const listRes = await client.get('');
+    existingJobs = listRes.data?.jobs || [];
+    logger.info(`Found ${existingJobs.length} existing job(s) in Cron-job.org`);
+  } catch (err: any) {
+    logger.warn(`Could not list existing jobs: ${err?.message}`);
+  }
+
   for (const job of jobsToCreate) {
+    const alreadyExists = existingJobs.find((j: any) => j.url === job.url || j.title === job.title);
+    if (alreadyExists) {
+      logger.info(`ℹ️ Cron job "${job.title}" already exists (Job ID: ${alreadyExists.jobId}). Skipping creation.`);
+      continue;
+    }
+
     logger.info(`Creating cron job: "${job.title}" -> ${job.url}...`);
+    // Wait 2 seconds before creating each job to avoid rate limiting (429)
+    await new Promise((r) => setTimeout(r, 2000));
+
     try {
       const payload = {
         job: {

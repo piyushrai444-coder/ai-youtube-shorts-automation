@@ -181,7 +181,10 @@ export class AdminController {
         short2Time,
         llmProvider,
         llmModel,
+        llmApiKey,
+        ttsProvider,
         ttsVoice,
+        ttsApiKey,
         enableBackgroundMusic,
       } = req.body;
 
@@ -192,7 +195,10 @@ export class AdminController {
       if (short2Time) await settingRepository.set('short_2_time', short2Time);
       if (llmProvider) await settingRepository.set('llm_provider', llmProvider);
       if (llmModel) await settingRepository.set('llm_model', llmModel);
+      if (llmApiKey && llmApiKey.trim()) await settingRepository.setSecure('llm_api_key', llmApiKey.trim());
+      if (ttsProvider) await settingRepository.set('tts_provider', ttsProvider);
       if (ttsVoice) await settingRepository.set('tts_voice', ttsVoice);
+      if (ttsApiKey && ttsApiKey.trim()) await settingRepository.setSecure('tts_api_key', ttsApiKey.trim());
       await settingRepository.set('enable_background_music', enableBackgroundMusic === 'on' ? 'true' : 'false');
 
       res.redirect('/admin/settings?success=Settings+updated+successfully');

@@ -62,38 +62,72 @@
             Authorize your YouTube channel to enable automatic daily uploads with custom titles, descriptions, and hashtags.
           </p>
 
-          <a href="/admin/youtube/connect" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white shadow-xl shadow-rose-950 transition active:scale-95">
-            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-            </svg>
-            Connect YouTube Channel
-          </a>
+          <% if (hasCredentials) { %>
+            <a href="/admin/youtube/connect" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white shadow-xl shadow-rose-950 transition active:scale-95">
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+              </svg>
+              Connect YouTube Channel
+            </a>
+          <% } else { %>
+            <div class="inline-block p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs text-left max-w-lg mb-6">
+              ⚠️ Google OAuth Client ID and Secret are required before connecting. Please enter them below or configure them in your Render environment variables.
+            </div>
+          <% } %>
         </div>
       <% } %>
     </div>
 
-    <!-- Google Cloud Console Setup Guide Accordion/Card -->
+    <!-- Google OAuth Credentials Form -->
+    <div class="mt-8 bg-slate-900/60 border border-slate-800 rounded-2xl p-6">
+      <h3 class="text-sm font-bold text-white mb-2 flex items-center gap-2">
+        <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+        </svg>
+        Google OAuth 2.0 Client Credentials
+      </h3>
+      <p class="text-xs text-slate-400 mb-4">
+        Enter the OAuth client ID & secret created in Google Cloud Console.
+      </p>
+
+      <form action="/admin/settings/youtube/credentials" method="POST" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Google Client ID</label>
+          <input type="text" name="googleClientId" value="<%= clientId %>" placeholder="xxxxxxxxxxxx-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.apps.googleusercontent.com" required
+            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs font-mono focus:outline-none focus:border-indigo-500">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Google Client Secret</label>
+          <input type="password" name="googleClientSecret" placeholder="<%= hasCredentials ? '•••••••••••••••• (Leave blank to keep existing)' : 'GOCSPX-xxxxxxxxxxxxxxxxxxxxxxxx' %>" <%= hasCredentials ? '' : 'required' %>
+            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs font-mono focus:outline-none focus:border-indigo-500">
+        </div>
+        <div class="flex justify-end pt-2">
+          <button type="submit" class="px-5 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow transition">
+            Save Google Credentials
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Google Cloud Console Setup Guide -->
     <div class="mt-8 bg-slate-900/40 border border-slate-800/80 rounded-2xl p-6">
       <h3 class="text-sm font-bold text-white mb-2 flex items-center gap-2">
         <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
         </svg>
-        Required Google Cloud OAuth Credentials
+        Google Cloud Setup Instructions
       </h3>
-      <p class="text-xs text-slate-400 mb-4">
-        Ensure your Render or local environment has the following environment variables set:
-      </p>
 
-      <div class="bg-slate-950 rounded-xl p-4 font-mono text-xs text-slate-300 space-y-1 border border-slate-800">
-        <div>GOOGLE_CLIENT_ID=&lt;your-oauth-client-id&gt;.apps.googleusercontent.com</div>
-        <div>GOOGLE_CLIENT_SECRET=&lt;your-oauth-client-secret&gt;</div>
-        <div>GOOGLE_REDIRECT_URI=https://&lt;your-render-domain&gt;/admin/youtube/callback</div>
-      </div>
-
-      <div class="mt-4 text-xs text-slate-400 space-y-1">
-        <div>1. Open Google Cloud Console → APIs & Services → Enable <strong>YouTube Data API v3</strong>.</div>
-        <div>2. Configure OAuth Consent Screen and add scope: <code class="text-indigo-300">.../auth/youtube.upload</code></div>
-        <div>3. In Credentials, add Authorized Redirect URI: <code class="text-indigo-300 font-mono"><%= typeof settings !== 'undefined' ? settings.appUrl : '' %>/admin/youtube/callback</code></div>
+      <div class="text-xs text-slate-400 space-y-2 mt-3">
+        <div>1. Go to <a href="https://console.cloud.google.com/apis/library/youtube.googleapis.com" target="_blank" class="text-indigo-400 underline">Google Cloud Console → YouTube Data API v3</a> and click <strong>Enable</strong>.</div>
+        <div>2. Go to <strong>OAuth consent screen</strong>: Set user type to <strong>External</strong>, and add your email under Test Users.</div>
+        <div>3. Add Scope: <code class="text-indigo-300 font-mono">https://www.googleapis.com/auth/youtube.upload</code></div>
+        <div>4. Go to <strong>Credentials</strong> → <strong>Create Credentials</strong> → <strong>OAuth client ID</strong> (Application type: <em>Web application</em>).</div>
+        <div>5. Under <strong>Authorized redirect URIs</strong>, add:</div>
+        <div class="bg-slate-950 rounded-xl p-3 font-mono text-xs text-indigo-300 border border-slate-800 select-all">
+          <%= redirectUri %>
+        </div>
+        <div>6. Copy the generated <strong>Client ID</strong> and <strong>Client Secret</strong> into the form above.</div>
       </div>
     </div>
   </main>

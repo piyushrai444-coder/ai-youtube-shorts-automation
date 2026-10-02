@@ -15,13 +15,24 @@ const SETTING_KEY_REFRESH_TOKEN = 'youtube_refresh_token';
 const SETTING_KEY_CHANNEL_INFO = 'youtube_channel_info';
 
 export class YouTubeAuthService {
+  async ensureCredentialsLoaded(): Promise<void> {
+    if (!config.youtube.clientId) {
+      const dbId = (await settingRepository.get('google_client_id')) || (await settingRepository.getSecure('google_client_id'));
+      if (dbId) config.youtube.clientId = dbId;
+    }
+    if (!config.youtube.clientSecret) {
+      const dbSecret = await settingRepository.getSecure('google_client_secret');
+      if (dbSecret) config.youtube.clientSecret = dbSecret;
+    }
+  }
+
   private createOAuth2Client(): OAuth2Client {
     const clientId = config.youtube.clientId;
     const clientSecret = config.youtube.clientSecret;
     const redirectUri = config.youtube.redirectUri;
 
     if (!clientId || !clientSecret) {
-      throw new Error('Google OAuth credentials (GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET) are not configured');
+      throw new Error('Google OAuth credentials (GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET) are not configured. Please enter them in Settings or Render environment variables.');
     }
 
     return new google.auth.OAuth2(clientId, clientSecret, redirectUri);
@@ -38,6 +49,7 @@ export class YouTubeAuthService {
   }
 
   async handleCallback(code: string): Promise<ChannelInfo> {
+    await this.ensureCredentialsLoaded();
     const oauth2Client = this.createOAuth2Client();
     const { tokens } = await oauth2Client.getToken(code);
 
@@ -64,6 +76,7 @@ export class YouTubeAuthService {
   }
 
   async getAuthenticatedClient(): Promise<OAuth2Client> {
+    await this.ensureCredentialsLoaded();
     const refreshToken = await settingRepository.getSecure(SETTING_KEY_REFRESH_TOKEN);
     if (!refreshToken) {
       throw new Error('YouTube is not connected. Please authorize YouTube in the Admin panel.');
@@ -105,6 +118,7 @@ export class YouTubeAuthService {
 
   async disconnect(): Promise<void> {
     try {
+      await this.ensureCredentialsLoaded();
       const refreshToken = await settingRepository.getSecure(SETTING_KEY_REFRESH_TOKEN);
       if (refreshToken) {
         const oauth2Client = this.createOAuth2Client();
