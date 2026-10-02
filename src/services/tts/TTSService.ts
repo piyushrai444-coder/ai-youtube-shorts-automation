@@ -4,6 +4,7 @@ import os from 'os';
 import { TTSProvider, AudioResult } from './TTSProvider.js';
 import { OpenAITTSProvider } from './OpenAITTSProvider.js';
 import { ElevenLabsTTSProvider } from './ElevenLabsTTSProvider.js';
+import { EdgeTTSProvider } from './EdgeTTSProvider.js';
 import { config } from '../../config/index.js';
 import { logger } from '../../utils/logger.js';
 import { ffmpegService } from '../video/FFmpegService.js';
@@ -27,14 +28,16 @@ export class TTSService {
     const dbVoice = await settingRepository.get('tts_voice');
     const dbKey = (await settingRepository.getSecure('tts_api_key')) || (await settingRepository.getSecure('llm_api_key'));
 
-    const type = (dbProvider || config.tts.provider || 'openai').toLowerCase();
+    const type = (dbProvider || config.tts.provider || 'edge').toLowerCase();
     const apiKey = dbKey || config.tts.apiKey;
-    const voice = dbVoice || config.tts.voice;
+    const hasValidKey = Boolean(apiKey && !apiKey.includes('your_') && apiKey.length > 10);
 
-    if (type === 'elevenlabs') {
+    if (type === 'elevenlabs' && hasValidKey) {
       return new ElevenLabsTTSProvider(apiKey);
-    } else {
+    } else if (type === 'openai' && hasValidKey) {
       return new OpenAITTSProvider(apiKey);
+    } else {
+      return new EdgeTTSProvider();
     }
   }
 
@@ -53,24 +56,14 @@ export class TTSService {
     try {
       result = await provider.generateSpeech(text, voice);
     } catch (err: any) {
-      const isConfigOrNetworkError =
-        err.message?.includes('API key') ||
-        err.message?.includes('Connection error') ||
-        err.code === 'ENOTFOUND' ||
-        !config.tts.apiKey ||
-        config.tts.apiKey.includes('your_');
-
-      if (isConfigOrNetworkError) {
-        const words = text.split(/\s+/).length;
-        const estDuration = Math.min(26.0, Math.max(15.0, Math.round((words / 2.6) * 10) / 10));
-        logger.warn(
-          `TTS external service unavailable (${err.message}). Using local synthesized voice track (${estDuration}s) for pipeline continuity.`,
-          undefined,
-          jobId
-        );
-        result = await this.generateOfflineAudio(estDuration);
-      } else {
-        throw err;
+      logger.warn(`Primary TTS provider ${provider.name} failed (${err.message}). Falling back to Microsoft Edge Neural Voice...`, undefined, jobId);
+      try {
+        const edgeFallback = new EdgeTTSProvider();
+        result = await edgeFallback.generateSpeech(text, voice);
+        logger.job(jobId || 'sys', 'Successfully generated high-fidelity neural voiceover via Edge TTS');
+      } catch (fallbackErr: any) {
+        logger.error(`Edge TTS fallback also failed: ${fallbackErr.message}`, undefined, jobId);
+        throw fallbackErr;
       }
     }
 
@@ -115,28 +108,6 @@ export class TTSService {
     };
   }
 
-  private async generateOfflineAudio(duration: number): Promise<AudioResult> {
-    const tmpDir = os.tmpdir();
-    const outPath = path.join(tmpDir, `synth_voice_${Date.now()}_${Math.random().toString(36).slice(2, 6)}.mp3`);
-    await new Promise<void>((resolve, reject) => {
-      const ffmpeg = require('fluent-ffmpeg');
-      ffmpeg()
-        .input(`sine=frequency=380:duration=${duration.toFixed(2)}`)
-        .inputOptions(['-f lavfi'])
-        .audioFilters('volume=0.25')
-        .output(outPath)
-        .on('end', () => resolve())
-        .on('error', (err: any) => reject(err))
-        .run();
-    });
-    const audioBuffer = await fs.promises.readFile(outPath);
-    try { await fs.promises.unlink(outPath); } catch {}
-    return {
-      audioBuffer,
-      durationSeconds: duration,
-      format: 'mp3',
-    };
-  }
 }
 
 export const ttsService = new TTSService();

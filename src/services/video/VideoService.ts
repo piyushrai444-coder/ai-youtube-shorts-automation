@@ -9,6 +9,7 @@ import { ffmpegService } from './FFmpegService.js';
 import { VideoValidator } from './VideoValidator.js';
 import { logger } from '../../utils/logger.js';
 import { config } from '../../config/index.js';
+import { settingRepository } from '../../repositories/SettingRepository.js';
 
 export interface RenderedVideoPackage {
   videoPath: string;
@@ -50,7 +51,8 @@ export class VideoService {
 
       // 4. Background Music (optional)
       const musicPath = path.resolve(process.cwd(), 'public/audio/ambient_tech.mp3');
-      const enableMusic = config.branding.enableBackgroundMusic;
+      const dbMusic = await settingRepository.get('enable_background_music');
+      const enableMusic = dbMusic !== null ? dbMusic === 'true' : fs.existsSync(musicPath);
 
       // 5. Render Video via FFmpeg
       const outputVideoPath = path.join(workDir, 'short_final.mp4');

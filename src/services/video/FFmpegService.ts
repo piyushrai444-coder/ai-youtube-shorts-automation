@@ -131,7 +131,7 @@ export class FFmpegService {
         const escapedSubPath = options.subtitlesPath
           .replace(/\\/g, '/')
           .replace(/:/g, '\\:');
-        videoFilters.push(`subtitles='${escapedSubPath}'`);
+        videoFilters.push(`subtitles='${escapedSubPath}':force_style='FontName=Arial,FontSize=24,Bold=1,PrimaryColour=&H0000FFFF,OutlineColour=&H00000000,BackColour=&H80000000,Outline=3,Shadow=2,Alignment=2,MarginV=360'`);
       }
 
       let audioComplexFilter = '';
