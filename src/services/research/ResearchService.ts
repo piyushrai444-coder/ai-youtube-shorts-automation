@@ -59,7 +59,14 @@ export class ResearchService {
     const seenUrls = new Set<string>();
     const seenTitles = new Set<string>();
 
-    for (const item of allDiscovered) {
+    // Sort by priority score and freshness, evaluating top 30 candidate items
+    const candidatePool = allDiscovered
+      .sort((a, b) => ((b.score ?? 0) - (a.score ?? 0)) || ((b.publishedAt?.getTime() ?? 0) - (a.publishedAt?.getTime() ?? 0)))
+      .slice(0, 30);
+
+    logger.job(jobId || 'sys', `Evaluating ${candidatePool.length} freshest candidate topics...`);
+
+    for (const item of candidatePool) {
       const normalizedUrl = item.sourceUrl.trim().toLowerCase();
       const normalizedTitle = item.title.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
 

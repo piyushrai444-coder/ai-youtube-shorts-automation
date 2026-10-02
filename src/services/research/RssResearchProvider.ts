@@ -74,8 +74,8 @@ export class RssResearchProvider implements ResearchProvider {
       try {
         logger.debug(`Fetching RSS feed: ${feed.name} from ${feed.url}`);
         const parsed = await this.parser.parseURL(feed.url);
-
-        for (const item of parsed.items || []) {
+        const recentItems = (parsed.items || []).slice(0, 15);
+        for (const item of recentItems) {
           if (!item.title || !item.link) continue;
 
           // Strip HTML from content or snippet
