@@ -1,0 +1,50 @@
+<nav class="bg-slate-900 border-b border-slate-800 sticky top-0 z-50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between h-16">
+      <div class="flex items-center gap-3">
+        <a href="/admin" class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-indigo-500 to-rose-500 flex items-center justify-center font-bold text-white shadow-lg shadow-indigo-500/30">
+            ▶
+          </div>
+          <span class="font-extrabold text-lg tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
+            AI Shorts Automation
+          </span>
+        </a>
+        <span class="hidden sm:inline-block px-2.5 py-0.5 text-xs font-semibold rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+          2/Day Auto
+        </span>
+      </div>
+
+      <div class="hidden md:flex items-center gap-1">
+        <a href="/admin" class="px-3 py-2 rounded-md text-sm font-medium transition text-slate-300 hover:text-white hover:bg-slate-800">
+          Dashboard
+        </a>
+        <a href="/admin/shorts" class="px-3 py-2 rounded-md text-sm font-medium transition text-slate-300 hover:text-white hover:bg-slate-800">
+          Shorts Library
+        </a>
+        <a href="/admin/settings" class="px-3 py-2 rounded-md text-sm font-medium transition text-slate-300 hover:text-white hover:bg-slate-800">
+          Settings
+        </a>
+        <a href="/admin/settings/youtube" class="px-3 py-2 rounded-md text-sm font-medium transition text-slate-300 hover:text-white hover:bg-slate-800">
+          YouTube OAuth
+        </a>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <form action="/admin/logout" method="POST" class="inline">
+          <button type="submit" class="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white bg-slate-800/80 hover:bg-slate-800 border border-slate-700/60 transition">
+            Sign Out
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Mobile Navigation Bar -->
+  <div class="md:hidden border-t border-slate-800 px-4 py-2 flex justify-around bg-slate-950">
+    <a href="/admin" class="text-xs font-medium text-slate-300 hover:text-white py-1">Dashboard</a>
+    <a href="/admin/shorts" class="text-xs font-medium text-slate-300 hover:text-white py-1">Shorts</a>
+    <a href="/admin/settings" class="text-xs font-medium text-slate-300 hover:text-white py-1">Settings</a>
+    <a href="/admin/settings/youtube" class="text-xs font-medium text-slate-300 hover:text-white py-1">YouTube</a>
+  </div>
+</nav>

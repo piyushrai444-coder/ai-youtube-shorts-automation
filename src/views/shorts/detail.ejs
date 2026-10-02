@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-950 text-slate-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= short.title %> | Short Details</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-full flex flex-col font-sans antialiased selection:bg-indigo-500 selection:text-white">
+  <%- include('../partials/navbar') %>
+
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <%- include('../partials/flash') %>
+
+    <!-- Back button & Status Header -->
+    <div class="flex items-center justify-between pb-6 border-b border-slate-800">
+      <a href="/admin/shorts" class="inline-flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-white transition">
+        ← Back to Shorts Library
+      </a>
+
+      <!-- Quick Action Buttons -->
+      <div class="flex items-center gap-2">
+        <% if (short.status === 'UPLOAD_PENDING' || short.status === 'VIDEO_READY') { %>
+          <form action="/admin/shorts/<%= short.id %>/upload" method="POST" onsubmit="return confirm('Upload this video to YouTube Shorts now?');">
+            <button type="submit" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-rose-600 hover:bg-rose-500 text-white transition">
+              Upload to YouTube
+            </button>
+          </form>
+        <% } %>
+
+        <form action="/admin/shorts/<%= short.id %>/retry" method="POST" onsubmit="return confirm('Retry the pipeline for this Short?');">
+          <button type="submit" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white transition">
+            Retry Pipeline
+          </button>
+        </form>
+
+        <form action="/admin/shorts/<%= short.id %>/delete" method="POST" onsubmit="return confirm('Are you sure you want to permanently delete this Short?');">
+          <button type="submit" class="px-3 py-2 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-rose-950/60 hover:text-rose-400 text-slate-400 border border-slate-700 transition">
+            Delete
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 mt-8">
+      <!-- Left Column: Video Preview & Audio (5 cols) -->
+      <div class="lg:col-span-5 flex flex-col items-center">
+        <div class="w-full max-w-xs bg-slate-900 rounded-3xl p-3 border border-slate-800 shadow-2xl shadow-slate-950">
+          <div class="aspect-[9/16] rounded-2xl bg-black overflow-hidden relative flex items-center justify-center border border-slate-800">
+            <% if (short.videoUrl) { %>
+              <video src="<%= short.videoUrl %>" controls playsinline class="w-full h-full object-cover">
+                Your browser does not support the video tag.
+              </video>
+            <% } else if (short.thumbnailUrl) { %>
+              <img src="<%= short.thumbnailUrl %>" alt="Thumbnail" class="w-full h-full object-cover">
+            <% } else { %>
+              <div class="text-center p-6 text-slate-500 text-xs">
+                Video not rendered yet (<%= short.status %>)
+              </div>
+            <% } %>
+          </div>
+        </div>
+
+        <!-- Audio Player preview -->
+        <% if (short.audioUrl) { %>
+          <div class="w-full max-w-xs mt-4 bg-slate-900/60 border border-slate-800 rounded-2xl p-4">
+            <div class="text-xs font-semibold text-slate-300 mb-2">Voiceover Audio</div>
+            <audio controls src="<%= short.audioUrl %>" class="w-full"></audio>
+          </div>
+        <% } %>
+      </div>
+
+      <!-- Right Column: Meta, Script, Attribution & YouTube details (7 cols) -->
+      <div class="lg:col-span-7 space-y-6">
+        <!-- Title & Status Badge -->
+        <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-6">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs font-semibold uppercase text-indigo-400"><%= short.category %></span>
+            <span class="px-2.5 py-1 rounded-full text-xs font-semibold <%= short.status === 'UPLOADED' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20' %>">
+              <%= short.status %>
+            </span>
+          </div>
+
+          <h2 class="text-xl font-extrabold text-white leading-snug"><%= short.title %></h2>
+
+          <% if (short.youtubeUrl) { %>
+            <div class="mt-4 p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-between">
+              <div>
+                <div class="text-xs font-semibold text-rose-300">Live on YouTube Shorts</div>
+                <div class="text-xs text-rose-400/80 font-mono mt-0.5"><%= short.youtubeVideoId %></div>
+              </div>
+              <a href="<%= short.youtubeUrl %>" target="_blank" rel="noopener" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-rose-600 hover:bg-rose-500 text-white transition">
+                Open in YouTube ↗
+              </a>
+            </div>
+          <% } %>
+
+          <% if (short.errorMessage) { %>
+            <div class="mt-4 p-4 rounded-xl bg-rose-950/40 border border-rose-800/40 text-xs text-rose-300">
+              <span class="font-bold">Error:</span> <%= short.errorMessage %>
+            </div>
+          <% } %>
+        </div>
+
+        <!-- Script Breakdown -->
+        <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-6">
+          <h3 class="text-sm font-bold text-white mb-4 flex items-center gap-2">
+            <span>Spoken Script</span>
+            <% if (short.durationSeconds) { %>
+              <span class="text-xs font-mono font-normal text-emerald-400">(<%= short.durationSeconds.toFixed(1) %>s • ≤30s compliant)</span>
+            <% } %>
+          </h3>
+
+          <div class="p-4 rounded-xl bg-slate-950/80 border border-slate-800/60 text-slate-200 text-sm leading-relaxed whitespace-pre-line font-medium">
+            <%= short.script || 'No script generated yet.' %>
+          </div>
+
+          <!-- YouTube Description -->
+          <h4 class="text-xs font-semibold text-slate-400 mt-5 mb-2 uppercase tracking-wider">YouTube Description & Hashtags</h4>
+          <div class="p-3 rounded-lg bg-slate-950/50 border border-slate-800/40 text-slate-300 text-xs font-mono whitespace-pre-line">
+            <%= short.description %>
+          </div>
+        </div>
+
+        <!-- Research Source Attribution -->
+        <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-6">
+          <h3 class="text-sm font-bold text-white mb-3">Verified Research Source</h3>
+          <% if (short.topic) { %>
+            <div class="space-y-2 text-xs">
+              <div><span class="text-slate-400">Source:</span> <span class="font-semibold text-white"><%= short.topic.source %></span></div>
+              <div>
+                <span class="text-slate-400">Original URL:</span> 
+                <a href="<%= short.topic.sourceUrl %>" target="_blank" rel="noopener" class="text-indigo-400 hover:underline break-all font-mono">
+                  <%= short.topic.sourceUrl %>
+                </a>
+              </div>
+              <div><span class="text-slate-400">Summary:</span> <p class="text-slate-300 mt-1"><%= short.topic.summary %></p></div>
+            </div>
+          <% } else { %>
+            <div class="text-xs text-slate-500">Autonomous research source not linked.</div>
+          <% } %>
+        </div>
+
+        <!-- Pipeline Diagnostics -->
+        <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-6">
+          <h3 class="text-sm font-bold text-white mb-3">Technical Diagnostics</h3>
+          <div class="grid grid-cols-2 gap-4 text-xs">
+            <div><span class="text-slate-500">Slot Key:</span> <span class="font-mono text-slate-300"><%= short.slotKey || 'N/A' %></span></div>
+            <div><span class="text-slate-500">Retries:</span> <span class="text-slate-300"><%= short.retryCount %></span></div>
+            <div><span class="text-slate-500">Created:</span> <span class="text-slate-300"><%= new Date(short.createdAt).toLocaleString() %></span></div>
+            <div><span class="text-slate-500">Uploaded:</span> <span class="text-slate-300"><%= short.uploadedAt ? new Date(short.uploadedAt).toLocaleString() : 'Pending' %></span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</body>
+</html>

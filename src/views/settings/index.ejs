@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-950 text-slate-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> | AI YouTube Shorts</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-full flex flex-col font-sans antialiased selection:bg-indigo-500 selection:text-white">
+  <%- include('../partials/navbar') %>
+
+  <main class="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <%- include('../partials/flash') %>
+
+    <div class="pb-6 border-b border-slate-800">
+      <h1 class="text-2xl font-bold tracking-tight text-white">Platform Settings</h1>
+      <p class="text-sm text-slate-400 mt-1">Configure automation schedules, AI models, voiceover tone, and channel branding.</p>
+    </div>
+
+    <form action="/admin/settings" method="POST" class="mt-8 space-y-8">
+      <!-- Branding & General -->
+      <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6">
+        <h2 class="text-base font-bold text-white mb-4">Branding & Channel Identity</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Channel Display Name</label>
+            <input type="text" name="channelName" value="<%= settings.db['channel_name'] || settings.branding.channelName %>" required
+              class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:outline-none focus:border-indigo-500">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Video Watermark Handle</label>
+            <input type="text" name="watermarkText" value="<%= settings.db['watermark_text'] || settings.branding.watermarkText %>" required
+              class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:outline-none focus:border-indigo-500">
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Default Call To Action (CTA)</label>
+            <input type="text" name="defaultCta" value="<%= settings.db['default_cta'] || settings.branding.defaultCta %>" required
+              class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:outline-none focus:border-indigo-500">
+          </div>
+        </div>
+      </div>
+
+      <!-- Schedule Configuration -->
+      <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6">
+        <h2 class="text-base font-bold text-white mb-1">Daily Schedule Timing</h2>
+        <p class="text-xs text-slate-400 mb-4">Configured for timezone: <span class="font-semibold text-indigo-400"><%= settings.cron.timezone %></span></p>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Short #1 Trigger Time (Morning)</label>
+            <input type="time" name="short1Time" value="<%= settings.db['short_1_time'] || settings.cron.short1Time %>" required
+              class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:outline-none focus:border-indigo-500">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Short #2 Trigger Time (Evening)</label>
+            <input type="time" name="short2Time" value="<%= settings.db['short_2_time'] || settings.cron.short2Time %>" required
+              class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:outline-none focus:border-indigo-500">
+          </div>
+        </div>
+      </div>
+
+      <!-- AI Provider & Model -->
+      <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6">
+        <h2 class="text-base font-bold text-white mb-4">AI Model & Script Synthesis</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">LLM Provider</label>
+            <select name="llmProvider" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:outline-none focus:border-indigo-500">
+              <option value="gemini" <%= (settings.db['llm_provider'] || settings.llm.provider) === 'gemini' ? 'selected' : '' %>>Google Gemini (Recommended)</option>
+              <option value="openai" <%= (settings.db['llm_provider'] || settings.llm.provider) === 'openai' ? 'selected' : '' %>>OpenAI (GPT-4o-mini)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Model Name</label>
+            <input type="text" name="llmModel" value="<%= settings.db['llm_model'] || settings.llm.model %>"
+              class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:outline-none focus:border-indigo-500">
+          </div>
+        </div>
+      </div>
+
+      <!-- Voiceover TTS -->
+      <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6">
+        <h2 class="text-base font-bold text-white mb-4">Voiceover TTS Settings</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Voice Profile</label>
+            <select name="ttsVoice" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:outline-none focus:border-indigo-500">
+              <option value="alloy" <%= (settings.db['tts_voice'] || settings.tts.voice) === 'alloy' ? 'selected' : '' %>>Alloy (Energetic & Clear)</option>
+              <option value="onyx" <%= (settings.db['tts_voice'] || settings.tts.voice) === 'onyx' ? 'selected' : '' %>>Onyx (Deep & Authoritative)</option>
+              <option value="echo" <%= (settings.db['tts_voice'] || settings.tts.voice) === 'echo' ? 'selected' : '' %>>Echo (Smooth Tech)</option>
+              <option value="nova" <%= (settings.db['tts_voice'] || settings.tts.voice) === 'nova' ? 'selected' : '' %>>Nova (Warm & Friendly)</option>
+              <option value="shimmer" <%= (settings.db['tts_voice'] || settings.tts.voice) === 'shimmer' ? 'selected' : '' %>>Shimmer (Expressive)</option>
+            </select>
+          </div>
+
+          <div class="flex items-center gap-3 pt-6">
+            <input type="checkbox" id="musicToggle" name="enableBackgroundMusic"
+              <%= (settings.db['enable_background_music'] === 'true' || settings.branding.enableBackgroundMusic) ? 'checked' : '' %>
+              class="w-4 h-4 rounded border-slate-700 text-indigo-600 focus:ring-indigo-500 bg-slate-950">
+            <label for="musicToggle" class="text-xs font-semibold text-slate-300">
+              Mix Ambient Tech Background Music
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex justify-end pt-4">
+        <button type="submit" class="px-6 py-2.5 rounded-xl font-semibold text-sm bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/25 transition">
+          Save Settings
+        </button>
+      </div>
+    </form>
+  </main>
+</body>
+</html>

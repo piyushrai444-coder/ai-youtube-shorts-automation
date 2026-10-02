@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-950 text-slate-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> | AI YouTube Shorts</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-full flex items-center justify-center p-4 font-sans antialiased">
+  <div class="w-full max-w-md bg-slate-900/80 border border-slate-800 rounded-3xl p-8 shadow-2xl backdrop-blur-xl">
+    <!-- Header -->
+    <div class="text-center mb-8">
+      <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-500 to-rose-500 flex items-center justify-center font-bold text-white shadow-lg shadow-indigo-500/30 mx-auto text-xl mb-3">
+        ▶
+      </div>
+      <h1 class="text-xl font-extrabold text-white">AI Shorts Admin Portal</h1>
+      <p class="text-xs text-slate-400 mt-1">Sign in to control and monitor daily automated publishing.</p>
+    </div>
+
+    <% if (typeof error !== 'undefined' && error) { %>
+      <div class="mb-6 rounded-xl bg-rose-500/10 border border-rose-500/20 p-3 text-xs text-rose-400 text-center font-medium">
+        <%= error %>
+      </div>
+    <% } %>
+
+    <form action="/admin/login" method="POST" class="space-y-4">
+      <input type="hidden" name="redirect" value="<%= redirect %>">
+
+      <div>
+        <label class="block text-xs font-semibold text-slate-300 mb-1">Username</label>
+        <input type="text" name="username" required autofocus
+          class="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-700/80 text-white text-sm focus:outline-none focus:border-indigo-500 transition">
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-slate-300 mb-1">Password</label>
+        <input type="password" name="password" required
+          class="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-700/80 text-white text-sm focus:outline-none focus:border-indigo-500 transition">
+      </div>
+
+      <button type="submit" class="w-full py-3 rounded-xl font-bold text-sm bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white shadow-lg shadow-indigo-500/25 transition active:scale-95 mt-2">
+        Sign In
+      </button>
+    </form>
+  </div>
+</body>
+</html>

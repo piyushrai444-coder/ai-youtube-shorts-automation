@@ -1,0 +1,135 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum ShortStatus {
+  RESEARCHING
+  TOPIC_SELECTED
+  SCRIPT_GENERATED
+  VOICE_GENERATED
+  VIDEO_GENERATING
+  VIDEO_READY
+  UPLOAD_PENDING
+  UPLOADING
+  UPLOADED
+  FAILED
+  RETRY_PENDING
+  CANCELLED
+  VALIDATION_FAILED
+}
+
+enum JobStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+model User {
+  id           String   @id @default(uuid())
+  username     String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("users")
+}
+
+model Topic {
+  id           String    @id @default(uuid())
+  title        String
+  sourceUrl    String
+  source       String
+  summary      String
+  category     String    @default("AI Tools")
+  publishedAt  DateTime?
+  contentHash  String    @unique
+  score        Float     @default(0.0)
+  used         Boolean   @default(false)
+  discoveredAt DateTime  @default(now())
+  createdAt    DateTime  @default(now())
+  shorts       Short[]
+
+  @@index([used])
+  @@index([discoveredAt])
+  @@index([category])
+  @@map("topics")
+}
+
+model Short {
+  id              String      @id @default(uuid())
+  slotKey         String?     @unique // e.g. "2026-10-02-short-1"
+  topicId         String?
+  topic           Topic?      @relation(fields: [topicId], references: [id], onDelete: SetNull)
+  title           String
+  script          String
+  description     String
+  tags            String      @default("AI,Artificial Intelligence,AITools,Tech,Shorts")
+  category        String      @default("AI Tools")
+  status          ShortStatus @default(RESEARCHING)
+  videoUrl        String?
+  audioUrl        String?
+  captionsUrl     String?
+  thumbnailUrl    String?
+  durationSeconds Float?
+  youtubeVideoId  String?
+  youtubeUrl      String?
+  errorMessage    String?
+  retryCount      Int         @default(0)
+  scheduledAt     DateTime?
+  uploadedAt      DateTime?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([status])
+  @@index([slotKey])
+  @@index([createdAt])
+  @@map("shorts")
+}
+
+model Setting {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
+
+  @@index([key])
+  @@map("settings")
+}
+
+model JobRun {
+  id           String    @id @default(uuid())
+  slotKey      String?   // Idempotency key e.g. "2026-10-02-short-1"
+  jobType      String    // "DAILY_SHORT_1", "DAILY_SHORT_2", "MANUAL", "RETRY"
+  status       JobStatus @default(PENDING)
+  shortId      String?
+  startedAt    DateTime  @default(now())
+  completedAt  DateTime?
+  errorMessage String?
+  metadata     String?   // JSON payload with logs and step details
+  retryCount   Int       @default(0)
+  nextRetryAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([slotKey])
+  @@index([status])
+  @@index([startedAt])
+  @@map("job_runs")
+}
+
+// Session table for connect-pg-simple
+model Session {
+  sid    String   @id
+  sess   Json
+  expire DateTime
+
+  @@index([expire])
+  @@map("session")
+}

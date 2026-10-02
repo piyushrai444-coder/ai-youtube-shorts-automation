@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-950 text-slate-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> | AI YouTube Shorts</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-full flex flex-col font-sans antialiased selection:bg-indigo-500 selection:text-white">
+  <%- include('../partials/navbar') %>
+
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-6 border-b border-slate-800/80 gap-4">
+      <div>
+        <h1 class="text-2xl font-bold tracking-tight text-white">YouTube Shorts Library</h1>
+        <p class="text-sm text-slate-400 mt-1">Review all automatically researched, rendered, and published Shorts.</p>
+      </div>
+
+      <!-- Filters -->
+      <div class="flex items-center gap-2 overflow-x-auto pb-1">
+        <a href="/admin/shorts" class="px-3 py-1.5 rounded-lg text-xs font-medium <%= !currentStatus ? 'bg-indigo-600 text-white' : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800' %>">
+          All
+        </a>
+        <a href="/admin/shorts?status=UPLOADED" class="px-3 py-1.5 rounded-lg text-xs font-medium <%= currentStatus === 'UPLOADED' ? 'bg-emerald-600 text-white' : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800' %>">
+          Uploaded
+        </a>
+        <a href="/admin/shorts?status=UPLOAD_PENDING" class="px-3 py-1.5 rounded-lg text-xs font-medium <%= currentStatus === 'UPLOAD_PENDING' ? 'bg-amber-600 text-white' : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800' %>">
+          Pending
+        </a>
+        <a href="/admin/shorts?status=FAILED" class="px-3 py-1.5 rounded-lg text-xs font-medium <%= currentStatus === 'FAILED' ? 'bg-rose-600 text-white' : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800' %>">
+          Failed
+        </a>
+      </div>
+    </div>
+
+    <!-- Shorts Grid -->
+    <% if (shorts.length === 0) { %>
+      <div class="text-center py-20 text-slate-500">
+        No Shorts found matching the selected filter.
+      </div>
+    <% } else { %>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-8">
+        <% for (const short of shorts) { %>
+          <div class="bg-slate-900/60 rounded-2xl border border-slate-800/80 overflow-hidden flex flex-col hover:border-slate-700 transition">
+            <!-- Thumbnail / Preview area -->
+            <div class="aspect-[9/16] max-h-72 bg-slate-950 relative overflow-hidden flex items-center justify-center">
+              <% if (short.thumbnailUrl) { %>
+                <img src="<%= short.thumbnailUrl %>" alt="Thumbnail" class="w-full h-full object-cover">
+              <% } else { %>
+                <div class="text-slate-600 text-xs flex flex-col items-center gap-2">
+                  <svg class="w-8 h-8 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                  </svg>
+                  <span>9:16 Preview</span>
+                </div>
+              <% } %>
+
+              <!-- Status Badge Overlay -->
+              <div class="absolute top-3 left-3">
+                <% if (short.status === 'UPLOADED') { %>
+                  <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500 text-slate-950">
+                    LIVE
+                  </span>
+                <% } else if (short.status === 'FAILED') { %>
+                  <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-500 text-white">
+                    FAILED
+                  </span>
+                <% } else { %>
+                  <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-500 text-white">
+                    <%= short.status %>
+                  </span>
+                <% } %>
+              </div>
+
+              <!-- Duration Badge -->
+              <% if (short.durationSeconds) { %>
+                <div class="absolute bottom-3 right-3 px-1.5 py-0.5 rounded bg-black/80 text-[10px] font-mono text-white">
+                  <%= short.durationSeconds.toFixed(1) %>s
+                </div>
+              <% } %>
+            </div>
+
+            <!-- Content Area -->
+            <div class="p-4 flex-1 flex flex-col justify-between">
+              <div>
+                <span class="text-[11px] font-semibold uppercase tracking-wider text-indigo-400"><%= short.category %></span>
+                <h3 class="font-bold text-sm text-white mt-1 line-clamp-2"><%= short.title || 'Generating title...' %></h3>
+                <p class="text-xs text-slate-400 mt-2 line-clamp-2"><%= short.script || 'Script synthesizing...' %></p>
+              </div>
+
+              <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between">
+                <span class="text-[11px] text-slate-500">
+                  <%= new Date(short.createdAt).toLocaleDateString() %>
+                </span>
+                <a href="/admin/shorts/<%= short.id %>" class="text-xs font-semibold text-indigo-400 hover:text-indigo-300">
+                  Inspect & Play →
+                </a>
+              </div>
+            </div>
+          </div>
+        <% } %>
+      </div>
+
+      <!-- Pagination -->
+      <% if (totalPages > 1) { %>
+        <div class="mt-8 flex justify-center gap-2">
+          <% for (let i = 1; i <= totalPages; i++) { %>
+            <a href="/admin/shorts?page=<%= i %><%= currentStatus ? '&status=' + currentStatus : '' %>"
+              class="px-3.5 py-2 rounded-lg text-xs font-medium <%= currentPage === i ? 'bg-indigo-600 text-white' : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-white' %>">
+              <%= i %>
+            </a>
+          <% } %>
+        </div>
+      <% } %>
+    <% } %>
+  </main>
+</body>
+</html>

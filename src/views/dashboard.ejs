@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-950 text-slate-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> | AI YouTube Shorts Automation</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-full flex flex-col font-sans antialiased selection:bg-indigo-500 selection:text-white">
+  <%- include('partials/navbar') %>
+
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <%- include('partials/flash') %>
+
+    <!-- Header Section -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-6 border-b border-slate-800/80 gap-4">
+      <div>
+        <h1 class="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
+          Daily Automation Dashboard
+          <span class="inline-flex items-center rounded-md bg-indigo-400/10 px-2 py-1 text-xs font-medium text-indigo-400 ring-1 ring-inset ring-indigo-400/20">
+            <%= schedule.timezone %>
+          </span>
+        </h1>
+        <p class="text-sm text-slate-400 mt-1">
+          Automated multi-source AI research, script synthesis, 9:16 vertical FFmpeg rendering, and direct YouTube publication.
+        </p>
+      </div>
+
+      <!-- Quick Action Controls -->
+      <div class="flex items-center gap-3">
+        <form action="/admin/shorts/generate" method="POST" onsubmit="return confirm('Launch manual Short generation now?');">
+          <button type="submit" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white shadow-lg shadow-indigo-500/25 transition active:scale-95">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+            </svg>
+            Generate Short Now
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- YouTube Connection Alert (if not connected) -->
+    <% if (!isYouTubeConnected) { %>
+      <div class="mt-6 rounded-2xl bg-amber-500/10 border border-amber-500/30 p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-lg flex-shrink-0">
+            ⚠
+          </div>
+          <div>
+            <h3 class="text-sm font-semibold text-amber-300">YouTube Channel Not Connected</h3>
+            <p class="text-xs text-amber-200/70 mt-0.5">
+              Generated videos will be saved in object storage and marked as "Upload Pending" until you link your official YouTube channel.
+            </p>
+          </div>
+        </div>
+        <a href="/admin/settings/youtube" class="px-4 py-2 text-xs font-semibold rounded-lg bg-amber-500 text-slate-950 hover:bg-amber-400 transition whitespace-nowrap text-center">
+          Connect YouTube Channel →
+        </a>
+      </div>
+    <% } %>
+
+    <!-- Metric Stats Grid -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+      <div class="bg-slate-900/60 rounded-2xl border border-slate-800/80 p-5">
+        <div class="text-xs font-medium text-slate-400 uppercase tracking-wider">Today's Generated</div>
+        <div class="text-3xl font-extrabold text-white mt-2"><%= stats.generated %> <span class="text-sm text-slate-500 font-normal">/ 2 target</span></div>
+        <div class="text-xs text-slate-500 mt-1">Slots scheduled for today</div>
+      </div>
+
+      <div class="bg-slate-900/60 rounded-2xl border border-slate-800/80 p-5">
+        <div class="text-xs font-medium text-slate-400 uppercase tracking-wider">Live On YouTube</div>
+        <div class="text-3xl font-extrabold text-emerald-400 mt-2"><%= stats.uploaded %></div>
+        <div class="text-xs text-emerald-500/70 mt-1">Successfully published</div>
+      </div>
+
+      <div class="bg-slate-900/60 rounded-2xl border border-slate-800/80 p-5">
+        <div class="text-xs font-medium text-slate-400 uppercase tracking-wider">Processing / Pending</div>
+        <div class="text-3xl font-extrabold text-indigo-400 mt-2"><%= stats.pending %></div>
+        <div class="text-xs text-indigo-500/70 mt-1">Rendering or upload queued</div>
+      </div>
+
+      <div class="bg-slate-900/60 rounded-2xl border border-slate-800/80 p-5">
+        <div class="text-xs font-medium text-slate-400 uppercase tracking-wider">Failed / Incomplete</div>
+        <div class="text-3xl font-extrabold text-rose-400 mt-2"><%= stats.failed %></div>
+        <div class="text-xs text-rose-500/70 mt-1">Auto-retry queue enabled</div>
+      </div>
+    </div>
+
+    <!-- Daily Schedule & Channel Status row -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+      <!-- Schedule Card -->
+      <div class="bg-slate-900/50 rounded-2xl border border-slate-800/80 p-5 md:col-span-2">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-base font-semibold text-white flex items-center gap-2">
+            <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            Daily Automation Schedule
+          </h2>
+          <span class="text-xs text-slate-500">Cron-job.org Triggered</span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="bg-slate-950/60 rounded-xl border border-slate-800/60 p-4">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-medium text-indigo-400">SHORT #1 (MORNING)</span>
+              <span class="px-2 py-0.5 rounded text-[10px] bg-slate-800 text-slate-300 font-mono">POST</span>
+            </div>
+            <div class="text-xl font-bold text-white mt-1"><%= schedule.short1 %> <span class="text-xs font-normal text-slate-400">IST</span></div>
+            <div class="text-xs text-slate-400 mt-2 break-all font-mono">
+              /api/cron/generate-short-1
+            </div>
+          </div>
+
+          <div class="bg-slate-950/60 rounded-xl border border-slate-800/60 p-4">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-medium text-purple-400">SHORT #2 (EVENING)</span>
+              <span class="px-2 py-0.5 rounded text-[10px] bg-slate-800 text-slate-300 font-mono">POST</span>
+            </div>
+            <div class="text-xl font-bold text-white mt-1"><%= schedule.short2 %> <span class="text-xs font-normal text-slate-400">IST</span></div>
+            <div class="text-xs text-slate-400 mt-2 break-all font-mono">
+              /api/cron/generate-short-2
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Channel Card -->
+      <div class="bg-slate-900/50 rounded-2xl border border-slate-800/80 p-5">
+        <h2 class="text-base font-semibold text-white mb-3 flex items-center justify-between">
+          <span>YouTube Channel</span>
+          <a href="/admin/settings/youtube" class="text-xs text-indigo-400 hover:underline">Manage</a>
+        </h2>
+        <% if (isYouTubeConnected && channelInfo) { %>
+          <div class="flex items-center gap-3 mt-4">
+            <% if (channelInfo.thumbnail) { %>
+              <img src="<%= channelInfo.thumbnail %>" alt="Channel" class="w-12 h-12 rounded-full border border-slate-700">
+            <% } else { %>
+              <div class="w-12 h-12 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center font-bold">YT</div>
+            <% } %>
+            <div>
+              <div class="font-bold text-sm text-white"><%= channelInfo.title %></div>
+              <div class="text-xs text-emerald-400 flex items-center gap-1 mt-0.5">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 inline-block"></span>
+                Connected & Ready
+              </div>
+            </div>
+          </div>
+          <div class="mt-4 pt-3 border-t border-slate-800/60 text-xs text-slate-500 font-mono break-all">
+            ID: <%= channelInfo.id %>
+          </div>
+        <% } else { %>
+          <div class="text-center py-4">
+            <div class="text-slate-400 text-xs mb-3">No YouTube channel currently connected.</div>
+            <a href="/admin/settings/youtube" class="inline-block px-3 py-1.5 text-xs font-semibold rounded-lg bg-rose-600 hover:bg-rose-500 text-white transition">
+              Authorize Channel
+            </a>
+          </div>
+        <% } %>
+      </div>
+    </div>
+
+    <!-- Recent Shorts Table -->
+    <div class="mt-8 bg-slate-900/50 rounded-2xl border border-slate-800/80 overflow-hidden">
+      <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between">
+        <h2 class="text-base font-semibold text-white">Recent Generated Shorts</h2>
+        <a href="/admin/shorts" class="text-xs font-medium text-indigo-400 hover:text-indigo-300">
+          View all library →
+        </a>
+      </div>
+
+      <% if (recentShorts.length === 0) { %>
+        <div class="text-center py-12 text-slate-500 text-sm">
+          No Shorts generated yet. Click "Generate Short Now" or wait for the scheduled cron run.
+        </div>
+      <% } else { %>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm text-slate-300">
+            <thead class="bg-slate-950/60 text-xs uppercase text-slate-400 font-semibold border-b border-slate-800">
+              <tr>
+                <th class="px-6 py-3.5">Title & Topic</th>
+                <th class="px-6 py-3.5">Status</th>
+                <th class="px-6 py-3.5">Duration</th>
+                <th class="px-6 py-3.5">Created</th>
+                <th class="px-6 py-3.5">YouTube</th>
+                <th class="px-6 py-3.5 text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800/60">
+              <% for (const short of recentShorts) { %>
+                <tr class="hover:bg-slate-800/30 transition">
+                  <td class="px-6 py-4">
+                    <div class="font-medium text-white line-clamp-1"><%= short.title || 'In production...' %></div>
+                    <div class="text-xs text-slate-400 mt-0.5 flex items-center gap-2">
+                      <span class="text-indigo-400"><%= short.category %></span>
+                      <% if (short.slotKey) { %>
+                        <span>•</span>
+                        <span class="font-mono text-[11px] text-slate-500"><%= short.slotKey %></span>
+                      <% } %>
+                    </div>
+                  </td>
+                  <td class="px-6 py-4">
+                    <% if (short.status === 'UPLOADED') { %>
+                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                        Uploaded
+                      </span>
+                    <% } else if (short.status === 'FAILED' || short.status === 'VALIDATION_FAILED') { %>
+                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                        Failed
+                      </span>
+                    <% } else if (short.status === 'UPLOAD_PENDING' || short.status === 'VIDEO_READY') { %>
+                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                        <%= short.status %>
+                      </span>
+                    <% } else { %>
+                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 animate-pulse">
+                        <%= short.status %>
+                      </span>
+                    <% } %>
+                  </td>
+                  <td class="px-6 py-4 font-mono text-xs">
+                    <%= short.durationSeconds ? short.durationSeconds.toFixed(1) + 's' : '-' %>
+                  </td>
+                  <td class="px-6 py-4 text-xs text-slate-400">
+                    <%= new Date(short.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) %>
+                  </td>
+                  <td class="px-6 py-4">
+                    <% if (short.youtubeUrl) { %>
+                      <a href="<%= short.youtubeUrl %>" target="_blank" rel="noopener" class="text-xs font-semibold text-rose-400 hover:text-rose-300 flex items-center gap-1">
+                        Watch Short ↗
+                      </a>
+                    <% } else { %>
+                      <span class="text-xs text-slate-600">-</span>
+                    <% } %>
+                  </td>
+                  <td class="px-6 py-4 text-right">
+                    <a href="/admin/shorts/<%= short.id %>" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 transition">
+                      Details →
+                    </a>
+                  </td>
+                </tr>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+    </div>
+  </main>
+</body>
+</html>
