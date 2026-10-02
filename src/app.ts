@@ -14,6 +14,9 @@ import { logger } from './utils/logger.js';
 export function createApp(): express.Application {
   const app = express();
 
+  // CRITICAL: Trust reverse proxy on Render / Cloudflare so req.secure and IP detection work
+  app.set('trust proxy', 1);
+
   // Security Headers (configured to allow inline Tailwind CDN, video playback, and images)
   app.use(
     helmet({
@@ -40,16 +43,19 @@ export function createApp(): express.Application {
   app.use(express.static(path.resolve(process.cwd(), 'public')));
   app.use('/uploads', express.static(path.resolve(process.cwd(), 'uploads')));
 
-  // Session Store Setup (Use connect-pg-simple if DATABASE_URL is valid, otherwise MemoryStore)
+  // Session Store Setup (Use connect-pg-simple with Prisma-managed session table)
   let sessionStore: session.Store | undefined;
   if (config.database.url && !config.database.url.includes('localhost') && process.env.NODE_ENV === 'production') {
     try {
       const PgStore = pgSession(session);
       const pgPool = new pg.Pool({ connectionString: config.database.url });
+      pgPool.on('error', (err) => {
+        logger.error(`Session pgPool error: ${err.message}`);
+      });
       sessionStore = new PgStore({
         pool: pgPool,
         tableName: 'session',
-        createTableIfMissing: true,
+        createTableIfMissing: false, // Session table is already managed by Prisma
       });
       logger.info('PostgreSQL session store initialized');
     } catch (err: any) {
@@ -63,9 +69,11 @@ export function createApp(): express.Application {
       secret: config.session.secret,
       resave: false,
       saveUninitialized: false,
+      proxy: true,
+      name: 'ai_shorts_sid',
       cookie: {
         httpOnly: true,
-        secure: config.env === 'production' && !config.appUrl.startsWith('http://localhost'),
+        secure: 'auto',
         sameSite: 'lax',
         maxAge: config.session.maxAgeDays * 24 * 60 * 60 * 1000,
       },

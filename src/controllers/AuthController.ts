@@ -51,8 +51,23 @@ export class AuthController {
       req.session.userId = user.id;
       req.session.username = user.username;
 
-      logger.info(`Admin user "${user.username}" logged in successfully`);
-      res.redirect(redirect || '/admin');
+      if (typeof req.session.save === 'function') {
+        req.session.save((err) => {
+          if (err) {
+            logger.error(`Session save error for user "${user.username}": ${err.message}`);
+            return res.render('login', {
+              title: 'Admin Login',
+              error: 'Session persistence error. Please try again.',
+              redirect: redirect || '/admin',
+            });
+          }
+          logger.info(`Admin user "${user.username}" logged in successfully`);
+          res.redirect(redirect || '/admin');
+        });
+      } else {
+        logger.info(`Admin user "${user.username}" logged in successfully`);
+        res.redirect(redirect || '/admin');
+      }
     } catch (err: any) {
       logger.error(`Login error: ${err.message}`);
       res.render('login', {
@@ -64,14 +79,20 @@ export class AuthController {
   }
 
   async logout(req: Request, res: Response): Promise<void> {
-    const username = req.session.username;
-    req.session.destroy((err) => {
-      if (err) {
-        logger.warn(`Session destroy error: ${err.message}`);
-      }
-      logger.info(`User ${username} logged out`);
+    const username = req.session?.username;
+    if (typeof req.session?.destroy === 'function') {
+      req.session.destroy((err) => {
+        if (err) {
+          logger.warn(`Session destroy error: ${err.message}`);
+        }
+        res.clearCookie('ai_shorts_sid');
+        logger.info(`User ${username} logged out`);
+        res.redirect('/admin/login');
+      });
+    } else {
+      res.clearCookie('ai_shorts_sid');
       res.redirect('/admin/login');
-    });
+    }
   }
 
   async showSetup(req: Request, res: Response): Promise<void> {
@@ -135,8 +156,18 @@ export class AuthController {
       req.session.userId = user.id;
       req.session.username = user.username;
 
-      logger.info(`First-time setup completed. Created admin user "${user.username}"`);
-      res.redirect('/admin');
+      if (typeof req.session.save === 'function') {
+        req.session.save((err) => {
+          if (err) {
+            logger.error(`Setup session save error: ${err.message}`);
+          }
+          logger.info(`First-time setup completed. Created admin user "${user.username}"`);
+          res.redirect('/admin');
+        });
+      } else {
+        logger.info(`First-time setup completed. Created admin user "${user.username}"`);
+        res.redirect('/admin');
+      }
     } catch (err: any) {
       logger.error(`Setup wizard error: ${err.message}`);
       res.render('setup', {

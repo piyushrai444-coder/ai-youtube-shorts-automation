@@ -3,8 +3,25 @@ import { User } from '@prisma/client';
 
 export class UserRepository {
   async findByUsername(username: string): Promise<User | null> {
-    return prisma.user.findUnique({
-      where: { username },
+    const trimmed = username.trim();
+    const exact = await prisma.user.findUnique({
+      where: { username: trimmed },
+    });
+    if (exact) return exact;
+
+    return prisma.user.findFirst({
+      where: {
+        username: {
+          equals: trimmed,
+          mode: 'insensitive',
+        },
+      },
+    });
+  }
+
+  async listAll(): Promise<User[]> {
+    return prisma.user.findMany({
+      orderBy: { createdAt: 'desc' },
     });
   }
 
