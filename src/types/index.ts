@@ -177,6 +177,8 @@ export interface YouTubeUploadInput {
   tags: string[];
   categoryId?: string;
   privacyStatus?: 'public' | 'private' | 'unlisted';
+  madeForKids?: boolean;
+  contentMode?: string;
 }
 
 export interface YouTubeUploadResult {
@@ -339,5 +341,221 @@ export interface CartoonQualityCheckResult {
   issues: string[];
   warnings: string[];
 }
+
+// ============================================================================
+// NURSERY RHYMES & KIDS SONGS FACTORY TYPES
+// ============================================================================
+
+export type NurseryContentMode =
+  | 'NURSERY_RHYME'
+  | 'ACTION_SONG'
+  | 'LEARNING_SONG'
+  | 'COUNTING_SONG'
+  | 'ABC_SONG'
+  | 'ANIMAL_SONG'
+  | 'BEDTIME_SONG'
+  | 'GOOD_HABITS_SONG'
+  | 'DANCE_SONG'
+  | 'STORY_SONG'
+  | 'SEASONAL_SONG'
+  | 'FAMILY_SONG';
+
+export type VideoLengthType = 'SHORT' | 'FULL_SONG' | 'COMPILATION';
+export type AspectRatioType = '9:16' | '16:9' | '1:1';
+export type PreschoolAgeGroup = '2-3' | '3-5' | '5-6';
+
+export type ChoreographyAction =
+  | 'CLAP'
+  | 'JUMP'
+  | 'HOP'
+  | 'SPIN'
+  | 'WAVE'
+  | 'POINT'
+  | 'STOMP'
+  | 'MARCH'
+  | 'NOD'
+  | 'SHAKE'
+  | 'TOUCH_HEAD'
+  | 'TOUCH_SHOULDERS'
+  | 'TOUCH_KNEES'
+  | 'BOUNCE'
+  | 'SWAY';
+
+export type LipSyncViseme =
+  | 'REST'
+  | 'A'
+  | 'E'
+  | 'I'
+  | 'O'
+  | 'U'
+  | 'MBP'
+  | 'FV'
+  | 'SZ'
+  | 'L'
+  | 'KG';
+
+export interface LyricSectionItem {
+  type: 'intro' | 'verse' | 'chorus' | 'action_break' | 'bridge' | 'outro';
+  title?: string;
+  startSec?: number;
+  endSec?: number;
+  durationSec?: number;
+  lyrics?: string;
+  lines?: string[];
+  singer?: string;
+  leadCharacter?: string;
+  actions?: ChoreographyAction[];
+  choreography?: ChoreographyAction[];
+  rhymeScheme?: string;
+  callAndResponse?: {
+    prompt: string;
+    audienceResponse: string;
+  };
+  sfxCue?: string;
+  index?: number;
+}
+
+export interface StructuredSongLyrics {
+  title: string;
+  theme: string;
+  contentMode?: NurseryContentMode | string;
+  targetAge?: PreschoolAgeGroup | string;
+  learningObjective?: string;
+  bpm: number;
+  musicalKey: string;
+  musicStyle: string;
+  sections: LyricSectionItem[];
+  totalDurationSeconds: number;
+}
+
+export interface SongIdeaInput {
+  title: string;
+  theme: string;
+  contentMode?: NurseryContentMode | string;
+  category?: string;
+  targetAge?: PreschoolAgeGroup | string;
+  targetAgeGroup?: PreschoolAgeGroup | string;
+  learningObjective?: string;
+  educationalConcept?: string;
+  emotionalTone?: string;
+  characters: string[];
+  setting?: string;
+  environment?: string;
+  chorusConcept?: string;
+  hookLyric?: string;
+  visualConcept?: string;
+  danceConcept?: string;
+  actionMoves?: ChoreographyAction[];
+  replayPotential?: string;
+  musicalKey?: string;
+  bpm?: number;
+  musicStyle?: string;
+  targetDurationSeconds?: number;
+}
+
+export interface SongScoreBreakdown {
+  educationalValue: number;    // 0-10
+  singAlongPotential: number;  // 0-10
+  memorability: number;        // 0-10
+  repetitionPotential: number; // 0-10
+  visualPotential: number;     // 0-10
+  characterAppeal: number;     // 0-10
+  dancePotential: number;      // 0-10
+  parentUsefulness: number;    // 0-10
+  childParticipation: number;  // 0-10
+  originality: number;         // 0-10 (Hard gate: must be >= 8)
+  originalityScore?: number;
+  earwormHookPotential?: number;
+  movementImitationClarity?: number;
+  toddlerComprehension?: number;
+  trendRelevance?: number;     // 0-10
+  replayPotential?: number;    // 0-10
+  finalScore: number;          // 0-100
+  rationale: string;
+}
+
+export interface ScoredSongIdea extends SongIdeaInput {
+  id?: string;
+  scores?: SongScoreBreakdown;
+  scoreBreakdown?: SongScoreBreakdown | any;
+  totalScore?: number;
+  selected?: boolean;
+}
+
+export interface MusicAsset {
+  audioBuffer: Buffer;
+  durationSeconds: number;
+  bpm: number;
+  musicalKey: string;
+  style: string;
+  format: 'mp3' | 'wav';
+  licenseInfo: string;
+  audioPath?: string;
+}
+
+export interface KaraokeWordTiming {
+  word: string;
+  startMs: number;
+  endMs: number;
+}
+
+export interface KaraokeSubtitleItem {
+  index: number;
+  startTime: string; // "00:00:01,200"
+  endTime: string;   // "00:00:03,500"
+  text: string;
+  actionCallout?: string;
+  words?: KaraokeWordTiming[];
+}
+
+export interface EnvironmentProfile {
+  id: string;
+  name: string;
+  category: 'outdoor' | 'indoor' | 'fantasy';
+  description: string;
+  lighting: string;
+  colorTheme: { primary: string; secondary: string; accent: string };
+  props: string[];
+}
+
+export interface KidsCharacterProfile extends CharacterProfile {
+  singingVoiceProfile: {
+    voiceName: string;
+    style: string;
+    pitchOffset: string;
+    vocalType: 'lead' | 'chorus' | 'call_response';
+  };
+  danceStyle: string;
+  signatureMove: ChoreographyAction;
+  expressions: {
+    happy: string;
+    sad: string;
+    surprised: string;
+    excited: string;
+    singing: string;
+  };
+  poses: {
+    dancing: string;
+    jumping: string;
+    clapping: string;
+    spinning: string;
+    marching: string;
+  };
+}
+
+export interface NurseryQualityCheckResult {
+  passed: boolean;
+  melodyComplete: boolean;
+  lyricsClear: boolean;
+  choreographySynced: boolean;
+  characterConsistencyScore: number;
+  durationSeconds: number;
+  targetDurationSeconds: number;
+  originalityVerified: boolean;
+  madeForKidsCompliant: boolean;
+  issues: string[];
+  warnings: string[];
+}
+
 
 

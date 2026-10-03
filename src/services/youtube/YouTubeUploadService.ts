@@ -17,10 +17,21 @@ export class YouTubeUploadService {
     const youtube = google.youtube({ version: 'v3', auth: authClient });
 
     const privacyStatus = input.privacyStatus || config.youtube.privacyStatus || 'public';
-    const categoryId = input.categoryId || '28'; // 28 = Science & Technology
+    const isMadeForKids =
+      input.madeForKids !== undefined
+        ? input.madeForKids
+        : (input.contentMode === 'nursery_rhymes' || config.youtubeAudienceMode === 'MADE_FOR_KIDS');
 
-    // Ensure tags include #Shorts
-    const tags = Array.from(new Set([...input.tags, 'Shorts', 'AI', 'AITools']));
+    const defaultCategoryId = isMadeForKids ? '27' : '28'; // 27 = Education, 28 = Science & Technology
+    const categoryId = input.categoryId || defaultCategoryId;
+
+    // Ensure tags fit the actual content mode
+    const defaultTags = isMadeForKids
+      ? ['NurseryRhymes', 'KidsSongs', 'Preschool', 'SingAlong', 'Shorts']
+      : input.contentMode === 'cartoon'
+        ? ['Cartoon', 'Animation', 'Shorts']
+        : ['Shorts', 'AI', 'AITools'];
+    const tags = Array.from(new Set([...input.tags, ...defaultTags]));
 
     try {
       const response = await youtube.videos.insert(
@@ -38,7 +49,7 @@ export class YouTubeUploadService {
             },
             status: {
               privacyStatus,
-              selfDeclaredMadeForKids: false,
+              selfDeclaredMadeForKids: isMadeForKids,
               embeddable: true,
             },
           },

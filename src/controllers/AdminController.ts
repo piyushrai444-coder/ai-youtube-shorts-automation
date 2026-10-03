@@ -16,6 +16,10 @@ import { performanceAnalyst } from '../services/learning/PerformanceAnalyst.js';
 import { characterManager } from '../services/cartoon/CharacterManager.js';
 import { storyRepository } from '../repositories/StoryRepository.js';
 import { fatigueDetector } from '../services/cartoon/FatigueDetector.js';
+import { kidsCharacterManager } from '../services/nursery/KidsCharacterManager.js';
+import { environmentManager } from '../services/nursery/EnvironmentManager.js';
+import { songRepository } from '../repositories/SongRepository.js';
+import { compilationService } from '../services/nursery/CompilationService.js';
 
 
 export class AdminController {
@@ -336,6 +340,64 @@ export class AdminController {
     } catch (err: any) {
       logger.error(`Manual cartoon generation failed: ${err.message}`);
       res.redirect(`/admin/cartoons?error=${encodeURIComponent(err.message)}`);
+    }
+  }
+
+  async showNursery(req: Request, res: Response): Promise<void> {
+    try {
+      await kidsCharacterManager.ensureSeeded();
+      await environmentManager.ensureSeeded();
+      const characters = await kidsCharacterManager.getAllCharacters();
+      const environments = await environmentManager.getAllEnvironments();
+      const songs = await songRepository.findAll(30, 'nursery_rhymes');
+      const contentMode = (await settingRepository.get('content_mode')) || config.contentMode || 'nursery_rhymes';
+
+      const success = req.query.success as string;
+      const error = req.query.error as string;
+
+      res.render('nursery/index', {
+        title: 'Nursery Rhymes Factory',
+        characters,
+        environments,
+        songs,
+        contentMode,
+        success,
+        error,
+      });
+    } catch (err: any) {
+      logger.error(`Error loading nursery dashboard: ${err.message}`);
+      res.status(500).render('error', { title: 'Nursery Factory Error', message: err.message });
+    }
+  }
+
+  async generateManualNursery(req: Request, res: Response): Promise<void> {
+    try {
+      const result = await jobScheduler.triggerSlot('manual', undefined, 'nursery_rhymes');
+      if (result.accepted) {
+        res.redirect('/admin/nursery?success=Nursery+Rhyme+production+started+in+background');
+      } else {
+        res.redirect(`/admin/nursery?error=${encodeURIComponent(result.message)}`);
+      }
+    } catch (err: any) {
+      logger.error(`Manual nursery generation failed: ${err.message}`);
+      res.redirect(`/admin/nursery?error=${encodeURIComponent(err.message)}`);
+    }
+  }
+
+  async buildNurseryCompilation(req: Request, res: Response): Promise<void> {
+    try {
+      const title = req.body?.title;
+      const maxSongs = req.body?.maxSongs ? parseInt(req.body.maxSongs) : 5;
+
+      const compResult = await compilationService.buildCompilation({
+        title,
+        maxSongs,
+      });
+
+      res.redirect(`/admin/nursery?success=Compilation+built+successfully+(${compResult.songCount}+songs,+${Math.round(compResult.totalDurationSeconds)}+seconds)`);
+    } catch (err: any) {
+      logger.error(`Compilation build failed: ${err.message}`);
+      res.redirect(`/admin/nursery?error=${encodeURIComponent(err.message)}`);
     }
   }
 

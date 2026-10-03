@@ -4,6 +4,7 @@ import { shortRepository } from '../repositories/ShortRepository.js';
 import { settingRepository } from '../repositories/SettingRepository.js';
 import { automationPipeline } from './AutomationPipeline.js';
 import { cartoonPipeline } from './CartoonPipeline.js';
+import { nurseryPipeline } from './NurseryPipeline.js';
 import { config } from '../config/index.js';
 import { logger } from '../utils/logger.js';
 import { JobStatus, ShortStatus } from '@prisma/client';
@@ -17,18 +18,20 @@ export interface ScheduleTriggerResult {
 }
 
 export class JobScheduler {
-  private async getEffectiveMode(slot?: ShortSlot): Promise<'cartoon' | 'ai_tools'> {
+  private async getEffectiveMode(slot?: ShortSlot): Promise<'nursery_rhymes' | 'cartoon' | 'ai_tools'> {
     const dbMode = await settingRepository.get('content_mode');
-    const configuredMode = (dbMode || config.contentMode || 'cartoon').toLowerCase();
+    const configuredMode = (dbMode || config.contentMode || 'nursery_rhymes').toLowerCase();
 
     if (configuredMode === 'hybrid') {
-      // In hybrid mode: Morning slot is cartoon, evening slot is AI tools
-      return slot === 'short-2' ? 'ai_tools' : 'cartoon';
+      // In hybrid mode: Morning slot is nursery rhymes, evening slot is AI tools
+      return slot === 'short-2' ? 'ai_tools' : 'nursery_rhymes';
     }
-    return configuredMode === 'ai_tools' ? 'ai_tools' : 'cartoon';
+    if (configuredMode === 'ai_tools') return 'ai_tools';
+    if (configuredMode === 'cartoon') return 'cartoon';
+    return 'nursery_rhymes';
   }
 
-  async triggerSlot(slot: ShortSlot, category?: string, explicitMode?: 'cartoon' | 'ai_tools'): Promise<ScheduleTriggerResult> {
+  async triggerSlot(slot: ShortSlot, category?: string, explicitMode?: 'nursery_rhymes' | 'cartoon' | 'ai_tools'): Promise<ScheduleTriggerResult> {
     const slotKey = generateSlotKey(slot);
     logger.info(`Received trigger for slot: ${slotKey} (${slot})`);
 
@@ -76,7 +79,9 @@ export class JobScheduler {
           shortId: existingShort?.id,
         };
 
-        if (effectiveMode === 'cartoon') {
+        if (effectiveMode === 'nursery_rhymes') {
+          await nurseryPipeline.execute(pipelineOptions);
+        } else if (effectiveMode === 'cartoon') {
           await cartoonPipeline.execute(pipelineOptions);
         } else {
           await automationPipeline.execute(pipelineOptions);
@@ -102,7 +107,11 @@ export class JobScheduler {
     }
 
     const slotKey = short.slotKey || `retry-${short.id}-${Date.now()}`;
-    const mode = short.contentMode === 'cartoon' ? 'cartoon' : (await this.getEffectiveMode());
+    const mode = short.contentMode === 'nursery_rhymes'
+      ? 'nursery_rhymes'
+      : short.contentMode === 'cartoon'
+        ? 'cartoon'
+        : (await this.getEffectiveMode());
 
     const job = await jobRepository.create({
       slotKey,
@@ -121,7 +130,9 @@ export class JobScheduler {
           shortId: short.id,
         };
 
-        if (mode === 'cartoon') {
+        if (mode === 'nursery_rhymes') {
+          await nurseryPipeline.execute(pipelineOptions);
+        } else if (mode === 'cartoon') {
           await cartoonPipeline.execute(pipelineOptions);
         } else {
           await automationPipeline.execute(pipelineOptions);

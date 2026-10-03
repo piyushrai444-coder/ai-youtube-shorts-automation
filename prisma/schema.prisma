@@ -340,4 +340,90 @@ model Scene {
   @@map("scenes")
 }
 
+model Song {
+  id                String            @id @default(uuid())
+  title             String
+  theme             String
+  contentMode       String            @default("NURSERY_RHYME")
+  videoType         String            @default("SHORT") // SHORT, FULL_SONG, COMPILATION
+  aspectRatio       String            @default("9:16") // 9:16, 16:9, 1:1
+  targetAgeGroup    String            @default("3-5")
+  learningObjective String?
+  emotionalTone     String            @default("cheerful")
+  bpm               Int               @default(115)
+  musicalKey        String            @default("C major")
+  musicStyle        String            @default("Preschool Pop")
+  lyricsStructured  Json
+  characters        String[]
+  environmentName   String            @default("Rainbow Playground")
+  durationSeconds   Float             @default(45.0)
+  songScore         Float             @default(0.0)
+  scoreBreakdown    Json?
+  audioTrackUrl     String?
+  videoUrl          String?
+  thumbnailUrl      String?
+  captionsUrl       String?
+  youtubeVideoId    String?
+  youtubeUrl        String?
+  madeForKids       Boolean           @default(true)
+  status            String            @default("APPROVED") // DRAFT, APPROVED, PRODUCING, PRODUCED, UPLOADED, FAILED
+  errorMessage      String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  compilations      CompilationItem[]
+
+  @@index([contentMode])
+  @@index([videoType])
+  @@index([status])
+  @@index([createdAt])
+  @@map("songs")
+}
+
+model Environment {
+  id             String   @id @default(uuid())
+  name           String   @unique
+  category       String   @default("outdoor") // outdoor, indoor, fantasy
+  description    String
+  lighting       String   @default("bright sunny day")
+  colorTheme     Json     // { primary, secondary, accent }
+  props          String[] // ["toy train", "building blocks", "rainbow arc"]
+  referenceImage String?
+  usageCount     Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([category])
+  @@map("environments")
+}
+
+model Compilation {
+  id             String            @id @default(uuid())
+  title          String
+  description    String
+  totalDuration  Float             @default(600.0)
+  youtubeVideoId String?
+  youtubeUrl     String?
+  status         String            @default("DRAFT")
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  items          CompilationItem[]
+
+  @@map("compilations")
+}
+
+model CompilationItem {
+  id            String      @id @default(uuid())
+  compilationId String
+  compilation   Compilation @relation(fields: [compilationId], references: [id], onDelete: Cascade)
+  songId        String
+  song          Song        @relation(fields: [songId], references: [id], onDelete: Cascade)
+  orderIndex    Int
+  transition    String      @default("crossfade")
+
+  @@index([compilationId])
+  @@index([songId])
+  @@map("compilation_items")
+}
+
+
 

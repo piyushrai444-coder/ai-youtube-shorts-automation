@@ -39,6 +39,7 @@ export interface RenderShortOptions {
   enableMusic?: boolean;
   outputPath: string;
   totalDuration: number;
+  aspectRatio?: '9:16' | '16:9';
 }
 
 export class FFmpegService {
@@ -118,11 +119,16 @@ export class FFmpegService {
       // Video: scale/crop to exactly 1080x1920 (9:16), set 30fps
       // Subtitles: if provided, burn into video
       // Audio: mix voiceover + low volume background music
+      const isLandscape = options.aspectRatio === '16:9';
+      const targetWidth = isLandscape ? 1920 : 1080;
+      const targetHeight = isLandscape ? 1080 : 1920;
+      const marginV = isLandscape ? 60 : 360;
+
       const videoFilters: string[] = [
-        'scale=1080:1920:force_original_aspect_ratio=decrease',
-        'pad=1080:1920:(ow-iw)/2:(oh-ih)/2:color=black',
+        `scale=${targetWidth}:${targetHeight}:force_original_aspect_ratio=decrease`,
+        `pad=${targetWidth}:${targetHeight}:(ow-iw)/2:(oh-ih)/2:color=black`,
         'fps=30',
-        "zoompan=z='if(lte(mod(on,120),60),zoom+0.0008,zoom-0.0008)':d=1:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s=1080x1920:fps=30",
+        `zoompan=z='if(lte(mod(on,120),60),zoom+0.0008,zoom-0.0008)':d=1:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s=${targetWidth}x${targetHeight}:fps=30`,
         'format=yuv420p',
       ];
 
@@ -132,7 +138,7 @@ export class FFmpegService {
         const escapedSubPath = options.subtitlesPath
           .replace(/\\/g, '/')
           .replace(/:/g, '\\:');
-        videoFilters.push(`subtitles='${escapedSubPath}':force_style='FontName=Arial,FontSize=24,Bold=1,PrimaryColour=&H0000FFFF,OutlineColour=&H00000000,BackColour=&H80000000,Outline=3,Shadow=2,Alignment=2,MarginV=360'`);
+        videoFilters.push(`subtitles='${escapedSubPath}':force_style='FontName=Arial,FontSize=24,Bold=1,PrimaryColour=&H0000FFFF,OutlineColour=&H00000000,BackColour=&H80000000,Outline=3,Shadow=2,Alignment=2,MarginV=${marginV}'`);
       }
 
       let audioComplexFilter = '';

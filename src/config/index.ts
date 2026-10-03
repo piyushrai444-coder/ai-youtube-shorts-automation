@@ -84,7 +84,9 @@ export const config = {
     ffprobePath: process.env.FFPROBE_PATH || '',
   },
 
-  contentMode: (process.env.CONTENT_MODE || 'cartoon').toLowerCase() as 'cartoon' | 'ai_tools' | 'hybrid',
+  contentMode: (process.env.CONTENT_MODE || 'nursery_rhymes').toLowerCase() as 'nursery_rhymes' | 'cartoon' | 'ai_tools' | 'hybrid',
+
+  youtubeAudienceMode: (process.env.YOUTUBE_AUDIENCE_MODE || 'MADE_FOR_KIDS').toUpperCase() as 'MADE_FOR_KIDS' | 'GENERAL_AUDIENCE',
 
   cartoon: {
     minDurationSeconds: parseInt(process.env.CARTOON_MIN_DURATION || '30', 10),
@@ -94,5 +96,24 @@ export const config = {
     maxCharactersPerShort: 3,
     defaultAudience: 'FAMILY' as const,
   },
+
+  nursery: {
+    shortMinDurationSeconds: parseInt(process.env.SHORT_MIN_DURATION || '30', 10),
+    shortMaxDurationSeconds: parseInt(process.env.SHORT_MAX_DURATION || '60', 10),
+    shortTargetDurationSeconds: 45,
+    songMinDurationSeconds: parseInt(process.env.SONG_MIN_DURATION || '90', 10),
+    songMaxDurationSeconds: parseInt(process.env.SONG_MAX_DURATION || '180', 10),
+    songTargetDurationSeconds: 120,
+    compilationEnabled: process.env.COMPILATION_ENABLED !== 'false',
+    defaultAgeGroup: '3-5' as const,
+    artStyle: process.env.NURSERY_ART_STYLE || 'High-quality 3D preschool cartoon animation, bright vibrant colors, soft lighting, clean friendly shapes, expressive faces',
+    bpmRanges: {
+      learning: [90, 115],
+      action: [110, 135],
+      dance: [120, 145],
+      bedtime: [60, 85],
+    },
+  },
 };
+
 

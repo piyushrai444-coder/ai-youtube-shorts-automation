@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - AI Nursery Rhymes Factory</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans antialiased">
+  <%- include('../partials/navbar') %>
+
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <%- include('../partials/flash') %>
+
+    <!-- Header Section -->
+    <div class="border-b border-slate-800 pb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div>
+        <div class="flex items-center gap-3">
+          <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight flex items-center gap-2">
+            <span>🧸</span> AI Nursery Rhymes & Kids Songs Factory
+          </h1>
+          <span class="px-2.5 py-0.5 text-xs font-bold rounded-full bg-pink-500/10 text-pink-400 border border-pink-500/20 uppercase">
+            Mode: <%= contentMode %>
+          </span>
+          <span class="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            Made for Kids (COPPA Compliant)
+          </span>
+        </div>
+        <p class="text-sm text-slate-400 mt-1">
+          Autonomous original 3D preschool universe: melodic singing, beat-synchronized choreography engine, lip-sync visemes, and zero copyrighted IP.
+        </p>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <form action="/admin/nursery/generate" method="POST">
+          <button type="submit" class="px-4 py-2 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-400 hover:to-rose-400 text-white font-bold text-sm rounded-xl transition shadow-lg shadow-pink-500/20 flex items-center gap-2">
+            <span>🎵</span> Produce Song Short
+          </button>
+        </form>
+        <form action="/admin/nursery/compilation" method="POST" class="flex items-center">
+          <button type="submit" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-sm rounded-xl transition border border-slate-700 flex items-center gap-1.5">
+            <span>🎬</span> Build Compilation
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Production Pipeline Benchmarks -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="bg-slate-900 border border-slate-800/80 rounded-2xl p-4">
+        <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
+          <span>Musical Engine</span>
+          <span class="text-pink-400 font-bold">100–128 BPM</span>
+        </div>
+        <div class="text-lg font-bold text-white">44.1kHz Backing Tracks</div>
+        <p class="text-[11px] text-slate-400 mt-1">Marimba, Ukulele, Toy Piano, Claps & Bass</p>
+      </div>
+
+      <div class="bg-slate-900 border border-slate-800/80 rounded-2xl p-4">
+        <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
+          <span>Singing & Lip-Sync</span>
+          <span class="text-emerald-400 font-bold">9 Visemes</span>
+        </div>
+        <div class="text-lg font-bold text-white">Neural Melodic Voices</div>
+        <p class="text-[11px] text-slate-400 mt-1">A, E, I, O, U, MBP, FV, SZ, L on beat</p>
+      </div>
+
+      <div class="bg-slate-900 border border-slate-800/80 rounded-2xl p-4">
+        <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
+          <span>Choreography Engine</span>
+          <span class="text-indigo-400 font-bold">8 Action Moves</span>
+        </div>
+        <div class="text-lg font-bold text-white">Beat-Synced Dancing</div>
+        <p class="text-[11px] text-slate-400 mt-1">Clap, Jump, Spin, Stomp, Wave & March</p>
+      </div>
+
+      <div class="bg-slate-900 border border-slate-800/80 rounded-2xl p-4">
+        <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
+          <span>Subtitles & Safety</span>
+          <span class="text-amber-400 font-bold">Category 27 / 10</span>
+        </div>
+        <div class="text-lg font-bold text-white">Karaoke Sing-Along</div>
+        <p class="text-[11px] text-slate-400 mt-1">Self-Declared Made for Kids on YouTube</p>
+      </div>
+    </div>
+
+    <!-- Persistent Preschool Cast Section -->
+    <div class="space-y-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-lg font-bold text-white flex items-center gap-2">
+            <span>🦁</span> Persistent Preschool Character Bibles (<%= characters.length %>)
+          </h2>
+          <p class="text-xs text-slate-400 mt-0.5">
+            Original cast with persistent 3D designs, vocal ranges, signature dances, and zero copyrighted material.
+          </p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <% characters.forEach(char => { %>
+          <div class="bg-slate-900 border border-slate-800/80 rounded-2xl p-5 hover:border-slate-700 transition flex flex-col justify-between">
+            <div>
+              <div class="flex items-start justify-between">
+                <div>
+                  <h3 class="text-base font-bold text-white"><%= char.name %></h3>
+                  <span class="text-xs text-pink-400 font-medium"><%= char.species %> • <%= char.personality %></span>
+                </div>
+                <span class="px-2 py-0.5 text-[11px] font-bold rounded-full bg-slate-800 text-slate-300 border border-slate-700">
+                  <%= char.totalAppearances %> Songs
+                </span>
+              </div>
+
+              <div class="mt-3 space-y-1.5 text-xs text-slate-300">
+                <div><strong class="text-slate-400">Outfit:</strong> <%= char.outfit %></div>
+                <div><strong class="text-slate-400">Singing Voice:</strong> <%= char.vocalRange %> (<%= char.voiceName %>)</div>
+                <div><strong class="text-slate-400">Signature Dance:</strong> <span class="text-amber-300 font-medium"><%= char.signatureDanceMove %></span></div>
+                <div><strong class="text-slate-400">Catchphrase:</strong> "<%= char.catchphrase %>"</div>
+              </div>
+            </div>
+
+            <div class="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-500">
+              <span>Target: Ages 1–5</span>
+              <span class="text-emerald-400">Original IP ✓</span>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    </div>
+
+    <!-- 3D Preschool Environment Library -->
+    <div class="space-y-4">
+      <div>
+        <h2 class="text-lg font-bold text-white flex items-center gap-2">
+          <span>🏰</span> 3D Preschool Environment Library (<%= environments.length %>)
+        </h2>
+        <p class="text-xs text-slate-400 mt-0.5">
+          Wholesome, colorful 3D animated environments designed for high preschool visual engagement.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <% environments.forEach(env => { %>
+          <div class="bg-slate-900 border border-slate-800/80 rounded-2xl p-4 hover:border-slate-700 transition">
+            <div class="flex items-start justify-between">
+              <h4 class="font-bold text-white text-sm"><%= env.name %></h4>
+              <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">
+                <%= env.timeOfDay %>
+              </span>
+            </div>
+            <p class="text-xs text-slate-400 mt-1"><%= env.description %></p>
+            <div class="mt-3 text-[11px] text-slate-400 border-t border-slate-800/60 pt-2">
+              <span>Used in <%= env.totalUsage %> productions</span>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    </div>
+
+    <!-- Recent Songs & Nursery Videos Section -->
+    <div class="space-y-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-lg font-bold text-white flex items-center gap-2">
+            <span>🎶</span> Nursery Rhymes & Songs Library (<%= songs.length %>)
+          </h2>
+          <p class="text-xs text-slate-400 mt-0.5">
+            Full songs and shorts produced with structured lyrics, educational concepts, and musical scores.
+          </p>
+        </div>
+      </div>
+
+      <% if (songs.length === 0) { %>
+        <div class="bg-slate-900 border border-slate-800/80 rounded-2xl p-8 text-center">
+          <p class="text-slate-400 text-sm">No nursery rhymes produced yet.</p>
+          <form action="/admin/nursery/generate" method="POST" class="mt-3">
+            <button type="submit" class="px-4 py-2 bg-pink-500 hover:bg-pink-400 text-white font-bold text-xs rounded-xl transition">
+              Produce First Song
+            </button>
+          </form>
+        </div>
+      <% } else { %>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <% songs.forEach(song => { %>
+            <div class="bg-slate-900 border border-slate-800/80 rounded-2xl p-5 hover:border-slate-700 transition flex flex-col justify-between">
+              <div>
+                <div class="flex items-start justify-between gap-2">
+                  <h3 class="font-bold text-white text-sm"><%= song.title %></h3>
+                  <span class="px-2 py-0.5 text-[10px] font-bold rounded-full uppercase
+                    <%= song.status === 'UPLOADED' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
+                        song.status === 'PRODUCED' ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20' :
+                        'bg-amber-500/10 text-amber-400 border border-amber-500/20' %>">
+                    <%= song.status %>
+                  </span>
+                </div>
+
+                <div class="mt-3 space-y-1 text-xs text-slate-300">
+                  <div><strong class="text-slate-400">Theme:</strong> <%= song.theme %></div>
+                  <div><strong class="text-slate-400">Learning:</strong> <%= song.learningObjective || 'Preschool Rhythm' %></div>
+                  <div><strong class="text-slate-400">Musical Info:</strong> <%= song.bpm %> BPM • Key <%= song.musicalKey %> • <%= song.musicStyle %></div>
+                  <div><strong class="text-slate-400">Cast:</strong> <%= song.characters ? song.characters.join(', ') : 'Ensemble' %></div>
+                  <div><strong class="text-slate-400">Setting:</strong> <%= song.environmentName %></div>
+                  <div><strong class="text-slate-400">Duration:</strong> <%= song.durationSeconds %>s (<%= song.videoType %>)</div>
+                </div>
+              </div>
+
+              <div class="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between">
+                <span class="text-xs font-semibold text-pink-400">Score: <%= song.songScore %>/100</span>
+                <% if (song.youtubeVideoId) { %>
+                  <a href="https://youtube.com/shorts/<%= song.youtubeVideoId %>" target="_blank" class="text-xs font-bold text-red-400 hover:text-red-300 flex items-center gap-1">
+                    <span>Watch on YT</span> ↗
+                  </a>
+                <% } %>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+      <% } %>
+    </div>
+  </main>
+</body>
+</html>

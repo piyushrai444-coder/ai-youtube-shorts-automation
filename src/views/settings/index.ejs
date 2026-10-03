@@ -56,19 +56,22 @@
 
         <div>
           <label class="block text-xs font-semibold text-slate-300 mb-1">Select Channel Focus</label>
-          <select name="contentMode" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm font-medium focus:outline-none focus:border-amber-500">
-            <option value="cartoon" <%= (settings.db['content_mode'] || 'cartoon') === 'cartoon' ? 'selected' : '' %>>
-              🎨 AI Cartoon Shorts Factory (Original 3D Animated Stories, 30-45s) [Recommended]
+          <select name="contentMode" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm font-medium focus:outline-none focus:border-pink-500">
+            <option value="nursery_rhymes" <%= (settings.db['content_mode'] || 'nursery_rhymes') === 'nursery_rhymes' ? 'selected' : '' %>>
+              🧸 AI Nursery Rhymes & Kids Songs Factory (Original 3D Preschool Music Videos, Songs, Choreography) [Active]
             </option>
-            <option value="ai_tools" <%= (settings.db['content_mode'] || 'cartoon') === 'ai_tools' ? 'selected' : '' %>>
+            <option value="cartoon" <%= (settings.db['content_mode'] || 'nursery_rhymes') === 'cartoon' ? 'selected' : '' %>>
+              🎨 AI Cartoon Shorts Factory (Original 3D Animated Stories, 30-45s)
+            </option>
+            <option value="ai_tools" <%= (settings.db['content_mode'] || 'nursery_rhymes') === 'ai_tools' ? 'selected' : '' %>>
               🤖 AI Tools & Technology Radar (Tech demonstrations & software discoveries)
             </option>
-            <option value="hybrid" <%= (settings.db['content_mode'] || 'cartoon') === 'hybrid' ? 'selected' : '' %>>
-              ⚡ Hybrid Mode (Morning: Cartoon Shorts, Evening: AI Tech Radar)
+            <option value="hybrid" <%= (settings.db['content_mode'] || 'nursery_rhymes') === 'hybrid' ? 'selected' : '' %>>
+              ⚡ Hybrid Mode (Morning: Nursery Rhymes, Evening: Cartoons)
             </option>
           </select>
           <p class="text-[11px] text-slate-400 mt-2">
-            In Cartoon mode, the system automatically researches viral animated story concepts, writes multi-scene dialogue with camera directions, performs multi-character neural voice acting, and renders 1080x1920 9:16 video.
+            In Nursery Rhymes mode, the system creates 100% original preschool learning songs with 3D animal characters (Leo, Mia, Toby, Ella, Owl), beat-synchronized dancing, karaoke subtitles, and COPPA Made-for-Kids compliance.
           </p>
         </div>
       </div>

@@ -85,15 +85,35 @@ export class JobRecoveryService {
         if (!job.slotKey) continue;
         logger.job(job.id, `Auto-retrying scheduled job ${job.id} for slot ${job.slotKey}`);
 
-        // Re-execute pipeline
+        // Re-execute appropriate pipeline
         setImmediate(async () => {
           try {
-            await automationPipeline.execute({
+            let mode = 'ai_tools';
+            if (job.shortId) {
+              const s = await shortRepository.findById(job.shortId);
+              if (s?.contentMode) mode = s.contentMode;
+            } else if (job.jobType.includes('NURSERY')) {
+              mode = 'nursery_rhymes';
+            } else if (job.jobType.includes('CARTOON')) {
+              mode = 'cartoon';
+            }
+
+            const pOptions = {
               jobId: job.id,
               slotKey: job.slotKey!,
               jobType: job.jobType,
               shortId: job.shortId || undefined,
-            });
+            };
+
+            if (mode === 'nursery_rhymes') {
+              const { nurseryPipeline } = await import('./NurseryPipeline.js');
+              await nurseryPipeline.execute(pOptions);
+            } else if (mode === 'cartoon') {
+              const { cartoonPipeline } = await import('./CartoonPipeline.js');
+              await cartoonPipeline.execute(pOptions);
+            } else {
+              await automationPipeline.execute(pOptions);
+            }
           } catch (err: any) {
             logger.error(`Retry execution for job ${job.id} failed: ${err.message}`);
           }

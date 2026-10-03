@@ -19,6 +19,10 @@ adminRouter.get('/admin/learning', (req, res) => adminController.showLearning(re
 adminRouter.get('/admin/cartoons', (req, res) => adminController.showCartoons(req, res));
 adminRouter.post('/admin/cartoons/generate', (req, res) => adminController.generateManualCartoon(req, res));
 
+adminRouter.get('/admin/nursery', (req, res) => adminController.showNursery(req, res));
+adminRouter.post('/admin/nursery/generate', (req, res) => adminController.generateManualNursery(req, res));
+adminRouter.post('/admin/nursery/compilation', (req, res) => adminController.buildNurseryCompilation(req, res));
+
 adminRouter.post('/admin/shorts/generate', (req, res) => adminController.generateManual(req, res));
 
 adminRouter.post('/admin/shorts/:id/retry', (req, res) => adminController.retryShort(req, res));
