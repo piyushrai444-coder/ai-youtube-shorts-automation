@@ -1,7 +1,10 @@
 import { ShortSlot, generateSlotKey } from '../utils/idempotency.js';
 import { jobRepository } from '../repositories/JobRepository.js';
 import { shortRepository } from '../repositories/ShortRepository.js';
+import { settingRepository } from '../repositories/SettingRepository.js';
 import { automationPipeline } from './AutomationPipeline.js';
+import { cartoonPipeline } from './CartoonPipeline.js';
+import { config } from '../config/index.js';
 import { logger } from '../utils/logger.js';
 import { JobStatus, ShortStatus } from '@prisma/client';
 
@@ -14,7 +17,18 @@ export interface ScheduleTriggerResult {
 }
 
 export class JobScheduler {
-  async triggerSlot(slot: ShortSlot, category?: string): Promise<ScheduleTriggerResult> {
+  private async getEffectiveMode(slot?: ShortSlot): Promise<'cartoon' | 'ai_tools'> {
+    const dbMode = await settingRepository.get('content_mode');
+    const configuredMode = (dbMode || config.contentMode || 'cartoon').toLowerCase();
+
+    if (configuredMode === 'hybrid') {
+      // In hybrid mode: Morning slot is cartoon, evening slot is AI tools
+      return slot === 'short-2' ? 'ai_tools' : 'cartoon';
+    }
+    return configuredMode === 'ai_tools' ? 'ai_tools' : 'cartoon';
+  }
+
+  async triggerSlot(slot: ShortSlot, category?: string, explicitMode?: 'cartoon' | 'ai_tools'): Promise<ScheduleTriggerResult> {
     const slotKey = generateSlotKey(slot);
     logger.info(`Received trigger for slot: ${slotKey} (${slot})`);
 
@@ -42,23 +56,31 @@ export class JobScheduler {
       };
     }
 
+    const effectiveMode = explicitMode || (await this.getEffectiveMode(slot));
+
     // 2. Create JobRun record in DB
     const job = await jobRepository.create({
       slotKey,
-      jobType: slot === 'manual' ? 'MANUAL' : `DAILY_${slot.toUpperCase().replace('-', '_')}`,
+      jobType: slot === 'manual' ? `MANUAL_${effectiveMode.toUpperCase()}` : `DAILY_${slot.toUpperCase().replace('-', '_')}`,
       status: JobStatus.PENDING,
     });
 
     // 3. Launch processing asynchronously in background (Non-blocking HTTP)
     setImmediate(async () => {
       try {
-        await automationPipeline.execute({
+        const pipelineOptions = {
           jobId: job.id,
           slotKey,
           jobType: job.jobType,
           category,
           shortId: existingShort?.id,
-        });
+        };
+
+        if (effectiveMode === 'cartoon') {
+          await cartoonPipeline.execute(pipelineOptions);
+        } else {
+          await automationPipeline.execute(pipelineOptions);
+        }
       } catch (err: any) {
         logger.error(`Background job ${job.id} execution failed: ${err.message}`);
       }
@@ -68,7 +90,7 @@ export class JobScheduler {
       accepted: true,
       jobId: job.id,
       slotKey,
-      message: `Job queued successfully for slot ${slotKey}`,
+      message: `Job queued successfully for slot ${slotKey} in [${effectiveMode.toUpperCase()}] mode`,
       alreadyExists: false,
     };
   }
@@ -80,22 +102,30 @@ export class JobScheduler {
     }
 
     const slotKey = short.slotKey || `retry-${short.id}-${Date.now()}`;
+    const mode = short.contentMode === 'cartoon' ? 'cartoon' : (await this.getEffectiveMode());
+
     const job = await jobRepository.create({
       slotKey,
-      jobType: 'RETRY',
+      jobType: `RETRY_${mode.toUpperCase()}`,
       shortId: short.id,
       status: JobStatus.PENDING,
     });
 
     setImmediate(async () => {
       try {
-        await automationPipeline.execute({
+        const pipelineOptions = {
           jobId: job.id,
           slotKey,
           jobType: 'RETRY',
           category: short.category,
           shortId: short.id,
-        });
+        };
+
+        if (mode === 'cartoon') {
+          await cartoonPipeline.execute(pipelineOptions);
+        } else {
+          await automationPipeline.execute(pipelineOptions);
+        }
       } catch (err: any) {
         logger.error(`Background retry job ${job.id} failed: ${err.message}`);
       }
@@ -105,9 +135,10 @@ export class JobScheduler {
       accepted: true,
       jobId: job.id,
       slotKey,
-      message: `Retry job queued for Short ${shortId}`,
+      message: `Retry job queued for Short ${shortId} in [${mode.toUpperCase()}] mode`,
     };
   }
 }
 
 export const jobScheduler = new JobScheduler();
+

@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - AI Cartoon Factory</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans antialiased">
+  <%- include('../partials/navbar') %>
+
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <%- include('../partials/flash') %>
+
+    <!-- Header Section -->
+    <div class="border-b border-slate-800 pb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div>
+        <div class="flex items-center gap-3">
+          <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight flex items-center gap-2">
+            <span>🎨</span> AI Cartoon Shorts Factory
+          </h1>
+          <span class="px-2.5 py-0.5 text-xs font-bold rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 uppercase">
+            Mode: <%= contentMode %>
+          </span>
+          <span class="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+            30–45s Strict Pacing
+          </span>
+        </div>
+        <p class="text-sm text-slate-400 mt-1">
+          Autonomous original 3D animated storytelling with multi-character voice acting, dynamic storyboard pacing, and zero copyrighted IP.
+        </p>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <form action="/admin/cartoons/generate" method="POST">
+          <button type="submit" class="px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-bold text-sm rounded-xl transition shadow-lg shadow-orange-500/20 flex items-center gap-2">
+            <span>🚀</span> Generate Cartoon Short
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Audience Fatigue Monitoring Status -->
+    <div class="bg-slate-900 border border-slate-800/80 rounded-2xl p-5 shadow-lg">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h3 class="text-sm font-bold text-white flex items-center gap-2">
+            <span>🛡️</span> Audience Fatigue Prevention System
+          </h3>
+          <p class="text-xs text-slate-400 mt-0.5">
+            Monitors character frequency and story trope rotation across recent Shorts to prevent audience drop-off.
+          </p>
+        </div>
+        <div class="flex items-center gap-2">
+          <% if (fatigue.fatiguedCharacters.length === 0 && fatigue.fatiguedFormats.length === 0) { %>
+            <span class="px-3 py-1 text-xs font-semibold rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              ✓ Cast & Formats Fresh
+            </span>
+          <% } else { %>
+            <span class="px-3 py-1 text-xs font-semibold rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
+              Rotations Active (<%= fatigue.fatiguedCharacters.length + fatigue.fatiguedFormats.length %> cooling down)
+            </span>
+          <% } %>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4 pt-4 border-t border-slate-800 text-xs">
+        <div>
+          <span class="text-slate-400">Recent Appearing Characters:</span>
+          <span class="text-slate-200 font-semibold ml-1">
+            <%= fatigue.recentCharacters.length > 0 ? fatigue.recentCharacters.join(', ') : 'None yet' %>
+          </span>
+        </div>
+        <div>
+          <span class="text-slate-400">Recommended Formats for Next Story:</span>
+          <span class="text-indigo-300 font-medium ml-1">
+            <%= fatigue.recommendedFormats.slice(0, 4).join(', ') %>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Persistent Character Cast Section -->
+    <div class="space-y-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-lg font-bold text-white flex items-center gap-2">
+            <span>🐾</span> Persistent Character Cast & Character Bibles (<%= characters.length %>)
+          </h2>
+          <p class="text-xs text-slate-400 mt-0.5">
+            Locked visual and behavioral traits enforced in every scene for permanent visual consistency.
+          </p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <% characters.forEach(char => { %>
+          <div class="bg-slate-900 border border-slate-800/80 rounded-2xl p-5 hover:border-slate-700 transition flex flex-col justify-between">
+            <div>
+              <div class="flex items-start justify-between">
+                <div>
+                  <h3 class="font-extrabold text-base text-white"><%= char.name %></h3>
+                  <p class="text-xs text-amber-400 font-medium"><%= char.species %></p>
+                </div>
+                <span class="px-2 py-0.5 text-[11px] font-semibold rounded bg-slate-800 text-slate-300 border border-slate-700">
+                  <%= char.appearanceCount %> Shorts
+                </span>
+              </div>
+
+              <!-- Personality badges -->
+              <div class="flex flex-wrap gap-1.5 mt-3">
+                <% (char.personality || []).slice(0, 3).forEach(p => { %>
+                  <span class="px-2 py-0.5 text-[10px] font-medium rounded-full bg-slate-800/80 text-slate-300">
+                    <%= p %>
+                  </span>
+                <% }) %>
+              </div>
+
+              <!-- Locked Bible snippet -->
+              <p class="text-xs text-slate-400 mt-3 line-clamp-3 leading-relaxed bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/50">
+                <%= char.bible %>
+              </p>
+            </div>
+
+            <!-- Voice profile info -->
+            <div class="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-400">
+              <span>Voice: <strong class="text-slate-200"><%= char.voiceProfile ? char.voiceProfile.voiceName : 'Neural' %></strong></span>
+              <span>Avg Ret: <strong class="text-emerald-400"><%= char.avgRetention %>%</strong></span>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    </div>
+
+    <!-- Cartoon Shorts Library Section -->
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-lg">
+      <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between">
+        <h2 class="text-base font-bold text-white flex items-center gap-2">
+          <span>🎬</span> Produced Cartoon Shorts (<%= cartoonShorts.length %>)
+        </h2>
+        <a href="/admin/shorts" class="text-xs text-indigo-400 hover:text-indigo-300 font-medium">View All Shorts →</a>
+      </div>
+
+      <% if (cartoonShorts.length === 0) { %>
+        <div class="p-8 text-center text-slate-400">
+          <p class="font-medium text-slate-300">No Cartoon Shorts produced yet</p>
+          <p class="text-xs text-slate-500 mt-1">
+            Click "Generate Cartoon Short" above to launch the autonomous creation pipeline!
+          </p>
+        </div>
+      <% } else { %>
+        <div class="divide-y divide-slate-800/60">
+          <% cartoonShorts.forEach(short => { %>
+            <div class="p-5 hover:bg-slate-850/40 transition flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div class="space-y-1 max-w-2xl">
+                <div class="flex items-center gap-2">
+                  <span class="px-2 py-0.5 text-xs font-bold rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                    CARTOON
+                  </span>
+                  <span class="text-sm font-bold text-white"><%= short.title %></span>
+                </div>
+                <p class="text-xs text-slate-400 line-clamp-1"><%= short.description %></p>
+                <div class="flex items-center gap-3 text-xs text-slate-400 pt-1">
+                  <span>Duration: <strong class="text-slate-200"><%= short.durationSeconds ? short.durationSeconds.toFixed(1) + 's' : '38s' %></strong></span>
+                  <span>Status: <strong class="text-indigo-400"><%= short.status %></strong></span>
+                  <% if (short.youtubeVideoId) { %>
+                    <span class="text-emerald-400">Published to YouTube</span>
+                  <% } %>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <a href="/admin/shorts/<%= short.id %>" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 transition">
+                  Details
+                </a>
+                <% if (short.youtubeUrl) { %>
+                  <a href="<%= short.youtubeUrl %>" target="_blank" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-red-300 hover:text-white bg-red-950/60 border border-red-800/60 hover:bg-red-900 transition flex items-center gap-1.5">
+                    <span>▶</span> YouTube
+                  </a>
+                <% } %>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+      <% } %>
+    </div>
+
+    <!-- Candidate Story Ideas Pool -->
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-lg">
+      <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between">
+        <div>
+          <h2 class="text-base font-bold text-white flex items-center gap-2">
+            <span>💡</span> Story Concept Brainstorm Pool (<%= storyIdeas.length %>)
+          </h2>
+          <p class="text-xs text-slate-400 mt-0.5">Top-scored concepts evaluated across 8 viral factors with strict originality checks.</p>
+        </div>
+      </div>
+
+      <% if (storyIdeas.length === 0) { %>
+        <div class="p-8 text-center text-slate-400">
+          <p class="font-medium text-slate-300">Story pool is empty</p>
+          <p class="text-xs text-slate-500 mt-1">Concepts are generated and evaluated automatically when the pipeline runs.</p>
+        </div>
+      <% } else { %>
+        <div class="divide-y divide-slate-800/60">
+          <% storyIdeas.slice(0, 10).forEach(idea => { %>
+            <div class="p-5 hover:bg-slate-850/40 transition flex flex-col md:flex-row md:items-start justify-between gap-4">
+              <div class="space-y-1.5 max-w-3xl">
+                <div class="flex items-center gap-2.5">
+                  <span class="px-2 py-0.5 text-xs font-bold rounded bg-slate-800 text-indigo-300 border border-indigo-500/20">
+                    <%= idea.format %>
+                  </span>
+                  <span class="font-bold text-white text-sm"><%= idea.title %></span>
+                  <span class="px-2 py-0.5 text-[11px] font-semibold rounded-full <%= idea.status === 'PRODUCED' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-slate-800 text-slate-400' %>">
+                    <%= idea.status %>
+                  </span>
+                </div>
+                <p class="text-xs text-slate-300 leading-relaxed"><%= idea.premise %></p>
+                <div class="text-[11px] text-slate-400 flex flex-wrap gap-4 pt-1">
+                  <span>Hook: <span class="text-slate-300 font-medium">"<%= idea.hookPattern %>"</span></span>
+                  <span>Cast: <span class="text-amber-400 font-medium"><%= (idea.characters || []).join(', ') %></span></span>
+                </div>
+              </div>
+
+              <div class="text-right whitespace-nowrap">
+                <div class="text-lg font-black text-amber-400"><%= idea.storyScore %>/100</div>
+                <div class="text-[10px] text-slate-500 uppercase tracking-wider">Story Score</div>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+      <% } %>
+    </div>
+  </main>
+</body>
+</html>

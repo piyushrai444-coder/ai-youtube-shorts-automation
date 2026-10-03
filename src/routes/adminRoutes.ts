@@ -16,8 +16,11 @@ adminRouter.post('/admin/analytics/sync', (req, res) => adminController.triggerS
 
 adminRouter.get('/admin/topics', (req, res) => adminController.showTopics(req, res));
 adminRouter.get('/admin/learning', (req, res) => adminController.showLearning(req, res));
+adminRouter.get('/admin/cartoons', (req, res) => adminController.showCartoons(req, res));
+adminRouter.post('/admin/cartoons/generate', (req, res) => adminController.generateManualCartoon(req, res));
 
 adminRouter.post('/admin/shorts/generate', (req, res) => adminController.generateManual(req, res));
+
 adminRouter.post('/admin/shorts/:id/retry', (req, res) => adminController.retryShort(req, res));
 adminRouter.post('/admin/shorts/:id/regenerate', (req, res) => adminController.retryShort(req, res));
 adminRouter.post('/admin/shorts/:id/upload', (req, res) => adminController.uploadPendingShort(req, res));

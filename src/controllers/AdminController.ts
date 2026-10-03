@@ -13,6 +13,10 @@ import { learningRepository } from '../repositories/LearningRepository.js';
 import { topicRepository } from '../repositories/TopicRepository.js';
 import { youtubeAnalyticsService } from '../services/youtube/YouTubeAnalyticsService.js';
 import { performanceAnalyst } from '../services/learning/PerformanceAnalyst.js';
+import { characterManager } from '../services/cartoon/CharacterManager.js';
+import { storyRepository } from '../repositories/StoryRepository.js';
+import { fatigueDetector } from '../services/cartoon/FatigueDetector.js';
+
 
 export class AdminController {
   async showDashboard(req: Request, res: Response): Promise<void> {
@@ -293,12 +297,55 @@ export class AdminController {
     }
   }
 
+  async showCartoons(req: Request, res: Response): Promise<void> {
+    try {
+      await characterManager.ensureSeeded();
+      const characters = await characterManager.getAllCharacters();
+      const storyIdeas = await storyRepository.findAllIdeas(undefined, 20);
+      const cartoonShorts = await shortRepository.listRecent(15);
+      const fatigue = await fatigueDetector.checkFatigue();
+      const contentMode = (await settingRepository.get('content_mode')) || config.contentMode || 'cartoon';
+
+      const success = req.query.success as string;
+      const error = req.query.error as string;
+
+      res.render('cartoons/index', {
+        title: 'Cartoon Factory',
+        characters,
+        storyIdeas,
+        cartoonShorts: cartoonShorts.filter((s) => s.contentMode === 'cartoon'),
+        fatigue,
+        contentMode,
+        success,
+        error,
+      });
+    } catch (err: any) {
+      logger.error(`Error loading cartoon dashboard: ${err.message}`);
+      res.status(500).render('error', { title: 'Cartoon Factory Error', message: err.message });
+    }
+  }
+
+  async generateManualCartoon(req: Request, res: Response): Promise<void> {
+    try {
+      const result = await jobScheduler.triggerSlot('manual', undefined, 'cartoon');
+      if (result.accepted) {
+        res.redirect('/admin/cartoons?success=Cartoon+Short+generation+started+in+background');
+      } else {
+        res.redirect(`/admin/cartoons?error=${encodeURIComponent(result.message)}`);
+      }
+    } catch (err: any) {
+      logger.error(`Manual cartoon generation failed: ${err.message}`);
+      res.redirect(`/admin/cartoons?error=${encodeURIComponent(err.message)}`);
+    }
+  }
+
   async saveSettings(req: Request, res: Response): Promise<void> {
     try {
       const {
         channelName,
         watermarkText,
         defaultCta,
+        contentMode,
         short1Time,
         short2Time,
         llmProvider,
@@ -313,6 +360,7 @@ export class AdminController {
       if (channelName) await settingRepository.set('channel_name', channelName);
       if (watermarkText) await settingRepository.set('watermark_text', watermarkText);
       if (defaultCta) await settingRepository.set('default_cta', defaultCta);
+      if (contentMode) await settingRepository.set('content_mode', contentMode);
       if (short1Time) await settingRepository.set('short_1_time', short1Time);
       if (short2Time) await settingRepository.set('short_2_time', short2Time);
       if (llmProvider) await settingRepository.set('llm_provider', llmProvider);
@@ -330,5 +378,6 @@ export class AdminController {
     }
   }
 }
+
 
 export const adminController = new AdminController();

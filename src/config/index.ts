@@ -83,4 +83,16 @@ export const config = {
     ffmpegPath: process.env.FFMPEG_PATH || '',
     ffprobePath: process.env.FFPROBE_PATH || '',
   },
+
+  contentMode: (process.env.CONTENT_MODE || 'cartoon').toLowerCase() as 'cartoon' | 'ai_tools' | 'hybrid',
+
+  cartoon: {
+    minDurationSeconds: parseInt(process.env.CARTOON_MIN_DURATION || '30', 10),
+    maxDurationSeconds: parseInt(process.env.CARTOON_MAX_DURATION || '45', 10),
+    targetDurationSeconds: parseInt(process.env.CARTOON_TARGET_DURATION || '38', 10),
+    artStyle: process.env.CARTOON_ART_STYLE || '3D cute cartoon animation style, clean expressive character design, vivid rich lighting, cinematic Disney-Pixar inspired warmth, 9:16 vertical composition',
+    maxCharactersPerShort: 3,
+    defaultAudience: 'FAMILY' as const,
+  },
 };
+

@@ -228,3 +228,116 @@ export interface LearningInsightData {
   actionableRule?: string;
 }
 
+// ============================================================================
+// CARTOON FACTORY TYPES & INTERFACES
+// ============================================================================
+
+export type ContentMode = 'AI_TOOLS' | 'CARTOON' | 'HYBRID';
+
+export type StoryFormat =
+  | 'FUNNY_MISUNDERSTANDING'
+  | 'UNEXPECTED_ENDING'
+  | 'EMOTIONAL_RESCUE'
+  | 'MINI_ADVENTURE'
+  | 'PROBLEM_SOLVER'
+  | 'CLEVER_UNDERDOG'
+  | 'WHOLESOME_FRIENDSHIP'
+  | 'WAIT_TILL_END'
+  | 'DAILY_COMEDY';
+
+export type StoryAudience = 'FAMILY' | 'KIDS_AND_PARENTS' | 'GENERAL_ANIMATION' | 'YOUNG_ADULTS';
+
+export type StoryGenre = 'COMEDY' | 'ADVENTURE' | 'HEARTWARMING' | 'SUSPENSE_TWIST' | 'MORAL';
+
+export interface CharacterProfile {
+  id?: string;
+  name: string;
+  species: string;
+  personality: string;
+  visualStyle: string;
+  signatureItem: string;
+  colorPalette: string;
+  catchphrase?: string;
+  voicePersona: string;
+  archetype?: string;
+  appearanceCount?: number;
+  avgRetentionRate?: number;
+  isActive?: boolean;
+}
+
+export interface StoryScoreBreakdown {
+  hookPower: number;          // 0-10: How compelling is the 0-2s visual/verbal hook?
+  curiosityDrive: number;     // 0-10: Does it create an irresistible curiosity gap?
+  emotionalArc: number;       // 0-10: Clear emotional progression (happy, shock, relief)?
+  visualPotential: number;    // 0-10: Can this be visually dynamic and expressive?
+  humorSurprise: number;      // 0-10: Punchline/twist strength?
+  originalityScore: number;   // 0-10: 100% original, zero IP infringement risk?
+  endingSatisfaction: number; // 0-10: Does the payoff satisfy the setup?
+  replayabilityScore: number; // 0-10: Does the ending loop naturally into the hook?
+  finalScore: number;         // Weighted aggregate 0-100
+  rationale: string;
+}
+
+export interface StoryIdeaInput {
+  title: string;
+  concept: string;
+  format: StoryFormat;
+  genre: StoryGenre;
+  audience: StoryAudience;
+  suggestedCharacters: string[];
+  hookSceneDescription: string;
+  twistOrPayoff: string;
+  moralLesson?: string;
+}
+
+export interface ScoredStoryIdea extends StoryIdeaInput {
+  id?: string;
+  scores: StoryScoreBreakdown;
+  selected?: boolean;
+}
+
+export interface StoryboardSceneItem {
+  sceneNumber: number;
+  title: string;
+  visualPrompt: string;
+  characterName: string;
+  dialogue: string;
+  action: string;
+  emotion: string;
+  cameraAngle: 'WIDE' | 'CLOSE_UP' | 'OVER_SHOULDER' | 'DUTCH_ANGLE' | 'TOP_DOWN' | 'ZOOM_IN';
+  sfxCue?: string;
+  bgmState?: 'UPBEAT' | 'SUSPENSE' | 'FUNNY' | 'TRIUMPHANT' | 'WARM';
+  durationSeconds: number;
+}
+
+export interface CartoonScript {
+  title: string;
+  logline: string;
+  format: StoryFormat;
+  genre: StoryGenre;
+  targetDurationSeconds: number; // 30 - 45s
+  characters: CharacterProfile[];
+  scenes: StoryboardSceneItem[];
+  moralLesson?: string;
+  loopTransition: string; // How the last second flows back into scene 1
+  totalEstimatedDuration: number;
+  wordCount: number;
+  tags: string[];
+  description: string;
+}
+
+export interface CartoonQualityCheckResult {
+  passed: boolean;
+  durationSeconds: number;
+  minDuration: number; // 30
+  maxDuration: number; // 45
+  targetDuration: number; // 38
+  characterConsistencyScore: number; // 0 - 100
+  audioSyncValid: boolean;
+  captionsValid: boolean;
+  originalityVerified: boolean;
+  issues: string[];
+  warnings: string[];
+}
+
+

@@ -80,9 +80,13 @@ model Short {
   description          String
   tags                 String                @default("AI,Artificial Intelligence,AITools,Tech,Shorts")
   category             String                @default("AI Tools")
-  format               String                @default("TOOL_DISCOVERY") // TOOL_DISCOVERY, DEMONSTRATION, PROBLEM_SOLUTION, COMPARISON, HIDDEN_FEATURE, BEFORE_AFTER, AI_NEWS, CHALLENGE
-  hookStyle            String?               // CURIOSITY_GAP, CONTRARIAN, RESULT_FIRST, PROBLEM_AGITATION, RELATABLE_FRUSTRATION
+  contentMode          String                @default("AI_TOOLS") // AI_TOOLS, CARTOON
+  format               String                @default("TOOL_DISCOVERY") // TOOL_DISCOVERY, DEMONSTRATION, PROBLEM_SOLUTION, etc. OR FUNNY, CUTE_ANIMAL, UNEXPECTED_ENDING, etc.
+  hookStyle            String?               // CURIOSITY_GAP, CONTRARIAN, RESULT_FIRST, etc.
   selectedHook         String?
+  storyIdeaId          String?
+  storyIdea            StoryIdea?            @relation(fields: [storyIdeaId], references: [id], onDelete: SetNull)
+  characterIds         String[]              @default([])
   experimentId         String?
   experiment           ContentExperiment?    @relation(fields: [experimentId], references: [id], onDelete: SetNull)
   contentQualityScore  Float?
@@ -109,6 +113,7 @@ model Short {
   @@index([slotKey])
   @@index([createdAt])
   @@index([format])
+  @@index([contentMode])
   @@index([performanceClass])
   @@map("shorts")
 }
@@ -253,4 +258,86 @@ model StrategyRun {
   @@index([createdAt])
   @@map("strategy_runs")
 }
+
+model Character {
+  id               String   @id @default(uuid())
+  name             String   @unique
+  species          String
+  ageGroup         String   @default("young") // young, adult, elder
+  personality      String[]
+  appearance       Json     // { fur, eyes, ears, build, distinctTraits }
+  clothing         Json     // { outfit, accessories, colors }
+  voiceProfile     Json     // { voiceName, voiceType, pitch, speed, emotion }
+  referenceImage   String?  // Reference asset URL
+  bible            String   // Persistent character bible (locked traits)
+  appearanceCount  Int      @default(0)
+  avgRetention     Float    @default(0.0)
+  avgViews         Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  scenes           Scene[]
+
+  @@index([species])
+  @@map("characters")
+}
+
+model StoryIdea {
+  id              String      @id @default(uuid())
+  title           String
+  premise         String
+  format          String      // FUNNY, CUTE_ANIMAL, UNEXPECTED_ENDING, EMOTIONAL, WHOLESOME, ADVENTURE, PROBLEM_SOLUTION, etc.
+  hookPattern     String
+  emotionalArc    String
+  characters      String[]
+  storyScore      Float       @default(0.0)
+  scoreBreakdown  Json?
+  status          String      @default("APPROVED") // DRAFT, APPROVED, REJECTED, PRODUCED
+  createdAt       DateTime    @default(now())
+  storyboard      Storyboard?
+  shorts          Short[]
+
+  @@index([format])
+  @@index([status])
+  @@index([storyScore])
+  @@map("story_ideas")
+}
+
+model Storyboard {
+  id             String    @id @default(uuid())
+  storyIdeaId    String    @unique
+  storyIdea      StoryIdea @relation(fields: [storyIdeaId], references: [id], onDelete: Cascade)
+  targetDuration Float     @default(38.0)
+  totalScenes    Int       @default(6)
+  createdAt      DateTime  @default(now())
+  scenes         Scene[]
+
+  @@map("storyboards")
+}
+
+model Scene {
+  id              String     @id @default(uuid())
+  storyboardId    String
+  storyboard      Storyboard @relation(fields: [storyboardId], references: [id], onDelete: Cascade)
+  sceneIndex      Int
+  durationSeconds Float
+  location        String
+  characterAction String
+  dialogue        String?
+  speakerName     String?
+  characterId     String?
+  character       Character? @relation(fields: [characterId], references: [id], onDelete: SetNull)
+  emotion         String     @default("neutral")
+  voiceDirection  Json?      // { speed, pitch, emotion, pauseMs }
+  sfxCue          String?    // e.g. "footsteps", "school bell", "whoosh", "pop", "gasp"
+  cameraAngle     String     @default("medium") // close-up, medium, wide, low-angle
+  visualPrompt    String
+  imagePath       String?
+  videoPath       String?
+  createdAt       DateTime   @default(now())
+
+  @@index([storyboardId])
+  @@index([sceneIndex])
+  @@map("scenes")
+}
+
 
