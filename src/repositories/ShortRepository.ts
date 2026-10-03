@@ -23,27 +23,41 @@ export class ShortRepository {
     });
   }
 
-  async update(id: string, data: Prisma.ShortUpdateInput): Promise<Short> {
-    return prisma.short.update({
-      where: { id },
-      data,
-      include: { topic: true },
-    });
+  async update(id: string, data: Prisma.ShortUpdateInput): Promise<Short | null> {
+    try {
+      return await prisma.short.update({
+        where: { id },
+        data,
+        include: { topic: true },
+      });
+    } catch (err: any) {
+      if (err.code === 'P2025') {
+        return null;
+      }
+      throw err;
+    }
   }
 
   async updateStatus(
     id: string,
     status: ShortStatus,
     extra: Partial<Prisma.ShortUpdateInput> = {}
-  ): Promise<Short> {
-    return prisma.short.update({
-      where: { id },
-      data: {
-        status,
-        ...extra,
-      },
-      include: { topic: true },
-    });
+  ): Promise<Short | null> {
+    try {
+      return await prisma.short.update({
+        where: { id },
+        data: {
+          status,
+          ...extra,
+        },
+        include: { topic: true },
+      });
+    } catch (err: any) {
+      if (err.code === 'P2025') {
+        return null;
+      }
+      throw err;
+    }
   }
 
   async listRecent(limit: number = 20, offset: number = 0, status?: ShortStatus): Promise<Short[]> {

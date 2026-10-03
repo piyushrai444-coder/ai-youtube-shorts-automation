@@ -43,21 +43,23 @@ export class JobRecoveryService {
         // Check associated Short
         if (job.shortId) {
           const short = await shortRepository.findById(job.shortId);
-          // If video was already uploaded to YouTube, do NOT retry, mark job as completed!
-          if (short?.status === ShortStatus.UPLOADED && short.youtubeVideoId) {
-            logger.job(job.id, 'Short was already uploaded. Marking job as COMPLETED.');
-            await jobRepository.update(job.id, {
-              status: JobStatus.COMPLETED,
-              completedAt: new Date(),
-            });
-            continue;
-          }
+          if (short) {
+            // If video was already uploaded to YouTube, do NOT retry, mark job as completed!
+            if (short.status === ShortStatus.UPLOADED && short.youtubeVideoId) {
+              logger.job(job.id, 'Short was already uploaded. Marking job as COMPLETED.');
+              await jobRepository.update(job.id, {
+                status: JobStatus.COMPLETED,
+                completedAt: new Date(),
+              });
+              continue;
+            }
 
-          // Otherwise mark as failed with recovery note
-          await shortRepository.update(job.shortId, {
-            status: ShortStatus.RETRY_PENDING,
-            errorMessage: 'Job interrupted due to instance restart. Ready for retry.',
-          });
+            // Otherwise mark as failed with recovery note
+            await shortRepository.update(short.id, {
+              status: ShortStatus.RETRY_PENDING,
+              errorMessage: 'Job interrupted due to instance restart. Ready for retry.',
+            });
+          }
         }
 
         // Schedule for retry
