@@ -8,6 +8,8 @@ import { lipSyncService } from '../src/services/nursery/LipSyncService.js';
 import { karaokeSubtitleService } from '../src/services/nursery/KaraokeSubtitleService.js';
 import { nurseryQualityGate } from '../src/services/nursery/NurseryQualityGate.js';
 import { compilationService } from '../src/services/nursery/CompilationService.js';
+import { songRepository } from '../src/repositories/SongRepository.js';
+import { prisma } from '../src/config/database.js';
 import { SongIdeaInput, ScoredSongIdea, StructuredSongLyrics } from '../src/types/index.js';
 import fs from 'fs';
 import path from 'path';
@@ -290,6 +292,29 @@ describe('Autonomous AI Nursery Rhymes & Kids Songs Factory', () => {
       expect(formatFn(0)).toBe('00:00');
       expect(formatFn(65)).toBe('01:05');
       expect(formatFn(3665)).toBe('01:01:05');
+    });
+  });
+
+  describe('SongRepository', () => {
+    it('should remap audioUrl to audioTrackUrl and strip audioUrl before updating prisma', async () => {
+      const updateSpy = jest.spyOn(prisma.song, 'update').mockResolvedValue({ id: 'song-123' } as any);
+
+      await songRepository.update('song-123', {
+        videoUrl: 'http://example.com/video.mp4',
+        audioUrl: 'http://example.com/audio.mp3',
+        status: 'PRODUCED',
+      } as any);
+
+      expect(updateSpy).toHaveBeenCalledWith({
+        where: { id: 'song-123' },
+        data: {
+          videoUrl: 'http://example.com/video.mp4',
+          audioTrackUrl: 'http://example.com/audio.mp3',
+          status: 'PRODUCED',
+        },
+      });
+
+      updateSpy.mockRestore();
     });
   });
 });

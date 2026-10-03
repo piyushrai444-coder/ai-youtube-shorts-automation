@@ -200,9 +200,17 @@ export class NurseryPipeline {
         throw new Error(`Preschool Quality Gate failed: ${qualityCheck.issues.join('; ')}`);
       }
 
-      // Upload video to cloud storage
+      // Upload video and vocals audio to cloud storage
       const videoBuffer = await fs.promises.readFile(renderedVideoPath);
       const storedVideo = await storageService.uploadVideo(videoBuffer, currentShortId, jobId);
+
+      let storedAudioUrl: string | undefined;
+      try {
+        const storedAudio = await storageService.uploadAudio(vocals.audioBuffer, currentShortId, jobId);
+        storedAudioUrl = storedAudio.url;
+      } catch (err: any) {
+        logger.warn(`Could not upload audio to storage: ${err.message}`, undefined, jobId);
+      }
 
       // Update short & song in DB
       await shortRepository.update(currentShortId, {
@@ -211,6 +219,7 @@ export class NurseryPipeline {
         description: `Sing and dance along with ${winningSongIdea.characters.join(' and ')} in this cheerful learning song about ${winningSongIdea.theme}! 🎶\n\nPreschool Learning Song | Nursery Rhymes for Kids\n#NurseryRhymes #KidsSongs #Preschool #SingAlong #Shorts`,
         tags: ['NurseryRhymes', 'KidsSongs', 'Preschool', 'LearningSongs', 'Shorts'].join(','),
         videoUrl: storedVideo.url,
+        audioUrl: storedAudioUrl,
         durationSeconds: qualityCheck.durationSeconds,
         status: ShortStatus.VIDEO_READY,
       });
@@ -218,7 +227,7 @@ export class NurseryPipeline {
       if (createdSongId) {
         await songRepository.update(createdSongId, {
           videoUrl: storedVideo.url,
-          audioUrl: storedVideo.url,
+          audioTrackUrl: storedAudioUrl,
           status: 'PRODUCED',
         });
       }
@@ -274,6 +283,7 @@ export class NurseryPipeline {
       if (createdSongId) {
         await songRepository.update(createdSongId, {
           youtubeVideoId: youtubeResult.videoId,
+          youtubeUrl: youtubeResult.url,
           status: 'UPLOADED',
         });
       }
@@ -295,6 +305,12 @@ export class NurseryPipeline {
       if (currentShortId) {
         await shortRepository.update(currentShortId, {
           status: ShortStatus.FAILED,
+          errorMessage: err.message,
+        }).catch(() => {});
+      }
+      if (createdSongId) {
+        await songRepository.update(createdSongId, {
+          status: 'FAILED',
           errorMessage: err.message,
         }).catch(() => {});
       }

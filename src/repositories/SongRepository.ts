@@ -1,5 +1,5 @@
 import { prisma } from '../config/database.js';
-import { Song, Compilation } from '@prisma/client';
+import { Song, Compilation, Prisma } from '@prisma/client';
 import { ScoredSongIdea, StructuredSongLyrics } from '../types/index.js';
 
 export interface CreateSongInput {
@@ -63,10 +63,17 @@ export class SongRepository {
     });
   }
 
-  async update(id: string, data: any): Promise<Song> {
+  async update(id: string, data: Prisma.SongUpdateInput & { audioUrl?: string }): Promise<Song> {
+    const updateData: any = { ...data };
+    if ('audioUrl' in updateData) {
+      if (!updateData.audioTrackUrl && updateData.audioUrl) {
+        updateData.audioTrackUrl = updateData.audioUrl;
+      }
+      delete updateData.audioUrl;
+    }
     return prisma.song.update({
       where: { id },
-      data: data as any,
+      data: updateData,
     });
   }
 
