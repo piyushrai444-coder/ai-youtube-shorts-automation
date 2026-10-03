@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - AI Shorts Growth Agent</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans antialiased">
+  <%- include('../partials/navbar') %>
+
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <%- include('../partials/flash') %>
+
+    <!-- Header & Sync Control -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-800 pb-6">
+      <div>
+        <div class="flex items-center gap-3">
+          <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight">YouTube Shorts Analytics</h1>
+          <span class="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+            Real-Time Telemetry
+          </span>
+        </div>
+        <p class="text-sm text-slate-400 mt-1">
+          Tracking viewer retention, viewed vs swiped ratios, and performance classes across all published Shorts.
+        </p>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <form action="/admin/analytics/sync" method="POST">
+          <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-xl transition shadow-lg shadow-indigo-500/20 flex items-center gap-2">
+            <svg class="w-4 h-4 animate-spin-reverse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+            </svg>
+            Sync YouTube Analytics Now
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Summary KPI Cards -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-sm">
+        <div class="text-xs font-medium uppercase tracking-wider text-slate-400">Total Views Tracked</div>
+        <div class="text-2xl sm:text-3xl font-extrabold text-white mt-1">
+          <%= channelSummary.totalViews.toLocaleString() %>
+        </div>
+        <div class="text-xs text-slate-500 mt-1">Across published Shorts</div>
+      </div>
+
+      <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-sm">
+        <div class="text-xs font-medium uppercase tracking-wider text-slate-400">Avg Retention (APV)</div>
+        <div class="text-2xl sm:text-3xl font-extrabold text-emerald-400 mt-1">
+          <%= channelSummary.avgChannelApv %>%
+        </div>
+        <div class="text-xs text-slate-500 mt-1">Average Percentage Viewed</div>
+      </div>
+
+      <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-sm">
+        <div class="text-xs font-medium uppercase tracking-wider text-slate-400">Total Likes</div>
+        <div class="text-2xl sm:text-3xl font-extrabold text-rose-400 mt-1">
+          <%= channelSummary.totalLikes.toLocaleString() %>
+        </div>
+        <div class="text-xs text-slate-500 mt-1">Engagement Signal</div>
+      </div>
+
+      <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-sm">
+        <div class="text-xs font-medium uppercase tracking-wider text-slate-400">Shorts Analyzed</div>
+        <div class="text-2xl sm:text-3xl font-extrabold text-sky-400 mt-1">
+          <%= channelSummary.totalTracked %>
+        </div>
+        <div class="text-xs text-slate-500 mt-1">In feedback loop</div>
+      </div>
+    </div>
+
+    <!-- Uploaded Shorts Performance Table -->
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-lg">
+      <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between">
+        <h2 class="text-base font-semibold text-white">Video Retention & Performance Classes</h2>
+        <span class="text-xs text-slate-400">Updated from YouTube Data & Analytics API</span>
+      </div>
+
+      <% if (shorts.length === 0) { %>
+        <div class="p-8 text-center text-slate-400">
+          <p>No published YouTube Shorts with performance snapshots recorded yet.</p>
+          <p class="text-xs text-slate-500 mt-1">Publish a Short or click "Sync YouTube Analytics Now" once videos are live.</p>
+        </div>
+      <% } else { %>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="border-b border-slate-800 text-xs font-semibold uppercase tracking-wider text-slate-400 bg-slate-950/50">
+                <th class="px-6 py-3.5">Video / Title</th>
+                <th class="px-4 py-3.5">Format & Hook</th>
+                <th class="px-4 py-3.5">Class</th>
+                <th class="px-4 py-3.5">Views</th>
+                <th class="px-4 py-3.5">APV (Retention)</th>
+                <th class="px-4 py-3.5">Viewed vs Swiped</th>
+                <th class="px-4 py-3.5">Published</th>
+                <th class="px-4 py-3.5">Action</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800/60 text-sm">
+              <% shorts.forEach(s => { 
+                const snap = s.performanceSnapshots[0];
+                const perf = s.performanceClass || 'AVERAGE';
+              %>
+                <tr class="hover:bg-slate-800/40 transition">
+                  <td class="px-6 py-4 max-w-xs">
+                    <div class="font-medium text-white truncate" title="<%= s.title %>">
+                      <%= s.title %>
+                    </div>
+                    <div class="text-xs text-slate-500 font-mono mt-0.5 truncate">
+                      ID: <%= s.youtubeVideoId %>
+                    </div>
+                  </td>
+                  <td class="px-4 py-4">
+                    <span class="inline-block px-2 py-0.5 text-xs font-semibold rounded bg-slate-800 text-indigo-300 border border-indigo-500/20">
+                      <%= s.format || 'TOOL_DISCOVERY' %>
+                    </span>
+                    <% if (s.hookStyle) { %>
+                      <div class="text-xs text-slate-400 mt-1"><%= s.hookStyle %></div>
+                    <% } %>
+                  </td>
+                  <td class="px-4 py-4">
+                    <% if (perf === 'TOP_PERFORMER') { %>
+                      <span class="px-2 py-0.5 text-xs font-bold rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                        ⭐ Top 10%
+                      </span>
+                    <% } else if (perf === 'ABOVE_AVERAGE') { %>
+                      <span class="px-2 py-0.5 text-xs font-bold rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                        ▲ Above Avg
+                      </span>
+                    <% } else if (perf === 'BELOW_AVERAGE') { %>
+                      <span class="px-2 py-0.5 text-xs font-bold rounded-full bg-orange-500/10 text-orange-400 border border-orange-500/20">
+                        ▼ Below Avg
+                      </span>
+                    <% } else if (perf === 'POOR') { %>
+                      <span class="px-2 py-0.5 text-xs font-bold rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                        ✕ Bottom 10%
+                      </span>
+                    <% } else { %>
+                      <span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-slate-800 text-slate-300">
+                        • Average
+                      </span>
+                    <% } %>
+                  </td>
+                  <td class="px-4 py-4 font-semibold text-white">
+                    <%= snap ? snap.views.toLocaleString() : '0' %>
+                  </td>
+                  <td class="px-4 py-4 font-semibold text-emerald-400">
+                    <%= snap && snap.avgPercentageViewed ? snap.avgPercentageViewed + '%' : 'Pending' %>
+                  </td>
+                  <td class="px-4 py-4 text-slate-300">
+                    <%= snap && snap.viewedVsSwiped ? snap.viewedVsSwiped + '%' : 'Pending' %>
+                  </td>
+                  <td class="px-4 py-4 text-xs text-slate-400">
+                    <%= s.uploadedAt ? new Date(s.uploadedAt).toLocaleDateString() : 'N/A' %>
+                  </td>
+                  <td class="px-4 py-4">
+                    <% if (s.youtubeVideoId) { %>
+                      <a href="https://youtube.com/shorts/<%= s.youtubeVideoId %>" target="_blank" class="text-xs text-indigo-400 hover:text-indigo-300 font-medium underline">
+                        Watch Short ↗
+                      </a>
+                    <% } %>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+    </div>
+  </main>
+</body>
+</html>

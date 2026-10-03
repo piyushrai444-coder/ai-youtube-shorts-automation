@@ -30,6 +30,13 @@ cronRouter.post(
   (req, res) => cronController.handleGenericCron(req, res)
 );
 
+cronRouter.post(
+  '/api/cron/sync-analytics',
+  cronLimiter,
+  cronAuth,
+  (req, res) => cronController.handleSyncAnalytics(req, res)
+);
+
 // Protected Admin diagnostic & emergency password reset endpoints
 cronRouter.get('/api/admin/users', cronAuth, async (req, res) => {
   try {

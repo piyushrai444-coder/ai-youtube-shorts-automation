@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - AI Shorts Growth Agent</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans antialiased">
+  <%- include('../partials/navbar') %>
+
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <%- include('../partials/flash') %>
+
+    <!-- Header -->
+    <div class="border-b border-slate-800 pb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div>
+        <div class="flex items-center gap-3">
+          <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight">Self-Learning Memory & Insights</h1>
+          <span class="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1.5">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            Closed Feedback Loop Active
+          </span>
+        </div>
+        <p class="text-sm text-slate-400 mt-1">
+          Learned patterns automatically calibrate future topic selection, format distribution, and hook styles.
+        </p>
+      </div>
+
+      <div>
+        <form action="/admin/analytics/sync" method="POST">
+          <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-xl transition shadow-lg shadow-indigo-500/20">
+            Re-run Pattern Analysis
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Active Learning Insights Section -->
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-lg">
+      <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between">
+        <h2 class="text-base font-semibold text-white">Synthesized Growth Hypotheses & Patterns (<%= insights.length %>)</h2>
+        <span class="text-xs text-slate-400">Statistical Threshold: N ≥ 3 (Observation) → N ≥ 5 (Hypothesis) → N ≥ 10 (Strong Pattern)</span>
+      </div>
+
+      <% if (insights.length === 0) { %>
+        <div class="p-8 text-center text-slate-400">
+          <p class="font-medium text-slate-300">Learning Memory is Warming Up</p>
+          <p class="text-xs text-slate-500 mt-1">
+            As your published Shorts accumulate watch time and retention snapshots, the system will extract winning formats and high-converting hooks here.
+          </p>
+        </div>
+      <% } else { %>
+        <div class="divide-y divide-slate-800/60">
+          <% insights.forEach(item => { %>
+            <div class="p-6 hover:bg-slate-850/40 transition flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div class="space-y-1 max-w-3xl">
+                <div class="flex items-center gap-2.5">
+                  <span class="px-2 py-0.5 text-xs font-semibold rounded bg-slate-800 text-indigo-300 border border-indigo-500/20">
+                    <%= item.category %>
+                  </span>
+
+                  <% if (item.confidence === 'STRONG_PATTERN') { %>
+                    <span class="px-2 py-0.5 text-[11px] font-bold rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                      ★ STRONG PATTERN (N=<%= item.sampleSize %>)
+                    </span>
+                  <% } else if (item.confidence === 'HYPOTHESIS') { %>
+                    <span class="px-2 py-0.5 text-[11px] font-bold rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/30">
+                      ◆ HYPOTHESIS (N=<%= item.sampleSize %>)
+                    </span>
+                  <% } else { %>
+                    <span class="px-2 py-0.5 text-[11px] font-medium rounded-full bg-slate-800 text-slate-400">
+                      ● OBSERVATION (N=<%= item.sampleSize %>)
+                    </span>
+                  <% } %>
+
+                  <span class="text-xs font-mono <%= item.impactScore >= 0 ? 'text-emerald-400' : 'text-rose-400' %>">
+                    <%= item.impactScore >= 0 ? '+' : '' %><%= item.impactScore %>% impact
+                  </span>
+                </div>
+
+                <div class="text-base font-semibold text-white"><%= item.title %></div>
+                <div class="text-sm text-slate-300"><%= item.description %></div>
+
+                <% if (item.actionableRule) { %>
+                  <div class="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-emerald-300 bg-emerald-950/40 px-3 py-1 rounded-lg border border-emerald-500/20">
+                    <span>⚡ Strategy Rule:</span>
+                    <span><%= item.actionableRule %></span>
+                  </div>
+                <% } %>
+              </div>
+
+              <div class="text-xs text-slate-500">
+                Updated: <%= new Date(item.updatedAt).toLocaleDateString() %>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+      <% } %>
+    </div>
+
+    <!-- Active Experiments & Content Allocation -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Active Experiments -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-lg space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+          <h2 class="text-base font-semibold text-white">Active Content Experiments</h2>
+          <span class="text-xs text-slate-400">Format A/B Testing</span>
+        </div>
+
+        <% if (experiments.length === 0) { %>
+          <div class="py-6 text-center text-sm text-slate-400">
+            <p>Target baseline allocation running:</p>
+            <ul class="text-xs text-slate-400 mt-2 space-y-1 inline-block text-left font-mono">
+              <li>• 40% AI Tool Discovery</li>
+              <li>• 25% AI Demonstration</li>
+              <li>• 15% Problem → Solution</li>
+              <li>• 10% Comparison & Hidden Features</li>
+              <li>• 10% AI News & Challenges</li>
+            </ul>
+          </div>
+        <% } else { %>
+          <div class="space-y-3">
+            <% experiments.forEach(exp => { %>
+              <div class="p-4 rounded-xl bg-slate-800/60 border border-slate-700/50 space-y-2">
+                <div class="flex items-center justify-between">
+                  <span class="font-semibold text-white text-sm"><%= exp.name %></span>
+                  <span class="text-xs px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                    <%= exp.format %>
+                  </span>
+                </div>
+                <p class="text-xs text-slate-300"><%= exp.hypothesis %></p>
+                <div class="text-xs text-slate-400 font-mono">
+                  Sample: <%= exp.sampleCount %> | Wins: <%= exp.winCount %>
+                </div>
+              </div>
+            <% }) %>
+          </div>
+        <% } %>
+      </div>
+
+      <!-- Recent Strategic Allocation Decisions -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-lg space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+          <h2 class="text-base font-semibold text-white">Recent Strategic Allocations</h2>
+          <span class="text-xs text-slate-400">Strategy Engine Log</span>
+        </div>
+
+        <% if (strategyRuns.length === 0) { %>
+          <div class="py-6 text-center text-sm text-slate-400">
+            No strategy runs recorded yet. Will record on next Short execution.
+          </div>
+        <% } else { %>
+          <div class="space-y-3">
+            <% strategyRuns.slice(0, 5).forEach(run => { %>
+              <div class="p-3.5 rounded-xl bg-slate-800/50 border border-slate-800 space-y-1">
+                <div class="flex items-center justify-between text-xs">
+                  <span class="font-bold text-white"><%= run.chosenFormat %></span>
+                  <span class="text-slate-500 font-mono"><%= new Date(run.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) %></span>
+                </div>
+                <div class="text-xs text-slate-400 line-clamp-2"><%= run.rationale %></div>
+              </div>
+            <% }) %>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </main>
+</body>
+</html>

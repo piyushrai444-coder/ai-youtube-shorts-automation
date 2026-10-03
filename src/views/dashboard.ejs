@@ -106,6 +106,90 @@
       </div>
     </div>
 
+    <!-- Self-Learning Growth Engine Section -->
+    <div class="mt-6 bg-gradient-to-r from-slate-900 to-indigo-950/40 rounded-2xl border border-indigo-500/20 p-6 shadow-xl space-y-4">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-indigo-500/10 pb-4">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-base shadow-inner">
+            🧠
+          </div>
+          <div>
+            <h2 class="text-base font-bold text-white flex items-center gap-2">
+              Autonomous Growth Agent & Learning Loop
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                Active Feedback
+              </span>
+            </h2>
+            <p class="text-xs text-slate-400">
+              Continuously discovers AI trends, tests formats (Tool Discovery, Demo, Problem-Solution), evaluates viewer retention, and recalibrates strategy.
+            </p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <a href="/admin/analytics" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">
+            View Retention Analytics
+          </a>
+          <a href="/admin/learning" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white transition shadow-sm">
+            Learning Memory →
+          </a>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
+        <!-- Active Insights Highlight -->
+        <div class="bg-slate-950/60 rounded-xl p-4 border border-slate-800/60 md:col-span-2">
+          <div class="flex items-center justify-between text-xs text-slate-400 font-semibold uppercase tracking-wider mb-2">
+            <span>Latest Synthesized Insights</span>
+            <a href="/admin/learning" class="text-indigo-400 hover:underline">All patterns</a>
+          </div>
+          <% if (typeof activeInsights !== 'undefined' && activeInsights.length > 0) { %>
+            <div class="space-y-2">
+              <% activeInsights.slice(0, 2).forEach(ins => { %>
+                <div class="flex items-start gap-2.5 text-xs">
+                  <span class="px-1.5 py-0.5 rounded text-[10px] font-bold font-mono <%= ins.impactScore >= 0 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20' %>">
+                    <%= ins.impactScore >= 0 ? '+' : '' %><%= ins.impactScore %>%
+                  </span>
+                  <div>
+                    <span class="font-semibold text-white"><%= ins.title %></span>
+                    <span class="text-slate-400 block mt-0.5"><%= ins.description %></span>
+                  </div>
+                </div>
+              <% }) %>
+            </div>
+          <% } else { %>
+            <p class="text-xs text-slate-500 py-1">
+              Observing performance telemetry. Winning format rules and retention patterns will appear here after video watch cycles.
+            </p>
+          <% } %>
+        </div>
+
+        <!-- Multi-Format Mix Status -->
+        <div class="bg-slate-950/60 rounded-xl p-4 border border-slate-800/60 space-y-2">
+          <div class="text-xs text-slate-400 font-semibold uppercase tracking-wider">Strategic Content Mix</div>
+          <div class="space-y-1.5 text-xs text-slate-300">
+            <div class="flex justify-between items-center">
+              <span>Tool Discovery</span>
+              <span class="font-mono text-indigo-400 font-bold">40%</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span>AI Demonstration</span>
+              <span class="font-mono text-emerald-400 font-bold">25%</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span>Problem → Solution</span>
+              <span class="font-mono text-amber-400 font-bold">15%</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span>Comparison / News</span>
+              <span class="font-mono text-purple-400 font-bold">20%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Daily Schedule & Channel Status row -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
       <!-- Schedule Card -->
@@ -211,8 +295,16 @@
                 <tr class="hover:bg-slate-800/30 transition">
                   <td class="px-6 py-4">
                     <div class="font-medium text-white line-clamp-1"><%= short.title || 'In production...' %></div>
-                    <div class="text-xs text-slate-400 mt-0.5 flex items-center gap-2">
+                    <div class="text-xs text-slate-400 mt-1 flex flex-wrap items-center gap-1.5">
                       <span class="text-indigo-400"><%= short.category %></span>
+                      <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-slate-800 text-indigo-300 border border-indigo-500/20">
+                        <%= short.format || 'TOOL_DISCOVERY' %>
+                      </span>
+                      <% if (short.performanceClass) { %>
+                        <span class="px-1.5 py-0.5 rounded text-[10px] font-bold text-amber-400 bg-amber-500/10 border border-amber-500/20">
+                          <%= short.performanceClass %>
+                        </span>
+                      <% } %>
                       <% if (short.slotKey) { %>
                         <span>•</span>
                         <span class="font-mono text-[11px] text-slate-500"><%= short.slotKey %></span>

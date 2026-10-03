@@ -42,19 +42,27 @@ model User {
 }
 
 model Topic {
-  id           String    @id @default(uuid())
-  title        String
-  sourceUrl    String
-  source       String
-  summary      String
-  category     String    @default("AI Tools")
-  publishedAt  DateTime?
-  contentHash  String    @unique
-  score        Float     @default(0.0)
-  used         Boolean   @default(false)
-  discoveredAt DateTime  @default(now())
-  createdAt    DateTime  @default(now())
-  shorts       Short[]
+  id              String         @id @default(uuid())
+  title           String
+  sourceUrl       String
+  source          String
+  summary         String
+  category        String         @default("AI Tools")
+  publishedAt     DateTime?
+  contentHash     String         @unique
+  score           Float          @default(0.0)
+  freshnessScore  Float          @default(0.0)
+  trendScore      Float          @default(0.0)
+  usefulnessScore Float          @default(0.0)
+  visualScore     Float          @default(0.0)
+  finalScore      Float          @default(0.0)
+  sourceCount     Int            @default(1)
+  company         String?
+  used            Boolean        @default(false)
+  discoveredAt    DateTime       @default(now())
+  createdAt       DateTime       @default(now())
+  shorts          Short[]
+  hookVariants    HookVariant[]
 
   @@index([used])
   @@index([discoveredAt])
@@ -63,33 +71,45 @@ model Topic {
 }
 
 model Short {
-  id              String      @id @default(uuid())
-  slotKey         String?     @unique // e.g. "2026-10-02-short-1"
-  topicId         String?
-  topic           Topic?      @relation(fields: [topicId], references: [id], onDelete: SetNull)
-  title           String
-  script          String
-  description     String
-  tags            String      @default("AI,Artificial Intelligence,AITools,Tech,Shorts")
-  category        String      @default("AI Tools")
-  status          ShortStatus @default(RESEARCHING)
-  videoUrl        String?
-  audioUrl        String?
-  captionsUrl     String?
-  thumbnailUrl    String?
-  durationSeconds Float?
-  youtubeVideoId  String?
-  youtubeUrl      String?
-  errorMessage    String?
-  retryCount      Int         @default(0)
-  scheduledAt     DateTime?
-  uploadedAt      DateTime?
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
+  id                   String                @id @default(uuid())
+  slotKey              String?               @unique // e.g. "2026-10-02-short-1"
+  topicId              String?
+  topic                Topic?                @relation(fields: [topicId], references: [id], onDelete: SetNull)
+  title                String
+  script               String
+  description          String
+  tags                 String                @default("AI,Artificial Intelligence,AITools,Tech,Shorts")
+  category             String                @default("AI Tools")
+  format               String                @default("TOOL_DISCOVERY") // TOOL_DISCOVERY, DEMONSTRATION, PROBLEM_SOLUTION, COMPARISON, HIDDEN_FEATURE, BEFORE_AFTER, AI_NEWS, CHALLENGE
+  hookStyle            String?               // CURIOSITY_GAP, CONTRARIAN, RESULT_FIRST, PROBLEM_AGITATION, RELATABLE_FRUSTRATION
+  selectedHook         String?
+  experimentId         String?
+  experiment           ContentExperiment?    @relation(fields: [experimentId], references: [id], onDelete: SetNull)
+  contentQualityScore  Float?
+  viralityScore        Float?
+  performanceClass     String?               // TOP_PERFORMER, ABOVE_AVERAGE, AVERAGE, BELOW_AVERAGE, POOR
+  status               ShortStatus           @default(RESEARCHING)
+  videoUrl             String?
+  audioUrl             String?
+  captionsUrl          String?
+  thumbnailUrl         String?
+  durationSeconds      Float?
+  youtubeVideoId       String?
+  youtubeUrl           String?
+  errorMessage         String?
+  retryCount           Int                   @default(0)
+  scheduledAt          DateTime?
+  uploadedAt           DateTime?
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  hookVariants         HookVariant[]
+  performanceSnapshots PerformanceSnapshot[]
 
   @@index([status])
   @@index([slotKey])
   @@index([createdAt])
+  @@index([format])
+  @@index([performanceClass])
   @@map("shorts")
 }
 
@@ -133,3 +153,104 @@ model Session {
   @@index([expire])
   @@map("session")
 }
+
+model HookVariant {
+  id               String   @id @default(uuid())
+  shortId          String?
+  short            Short?   @relation(fields: [shortId], references: [id], onDelete: Cascade)
+  topicId          String?
+  topic            Topic?   @relation(fields: [topicId], references: [id], onDelete: SetNull)
+  hookText         String
+  patternType      String   // CURIOSITY_GAP, CONTRARIAN, RESULT_FIRST, PROBLEM_AGITATION, RELATABLE_FRUSTRATION
+  clarityScore     Float    @default(0.0)
+  curiosityScore   Float    @default(0.0)
+  specificityScore Float    @default(0.0)
+  valueScore       Float    @default(0.0)
+  totalScore       Float    @default(0.0)
+  selected         Boolean  @default(false)
+  createdAt        DateTime @default(now())
+
+  @@index([shortId])
+  @@index([topicId])
+  @@index([patternType])
+  @@map("hook_variants")
+}
+
+model ContentExperiment {
+  id           String   @id @default(uuid())
+  name         String
+  format       String   // TOOL_DISCOVERY, DEMONSTRATION, PROBLEM_SOLUTION, etc.
+  hookStyle    String?
+  hypothesis   String?
+  targetMetric String   @default("avgPercentageViewed")
+  status       String   @default("ACTIVE") // ACTIVE, COMPLETED, PAUSED
+  sampleCount  Int      @default(0)
+  winCount     Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  shorts       Short[]
+
+  @@index([status])
+  @@index([format])
+  @@map("content_experiments")
+}
+
+model PerformanceSnapshot {
+  id                     String   @id @default(uuid())
+  shortId                String
+  short                  Short    @relation(fields: [shortId], references: [id], onDelete: Cascade)
+  youtubeVideoId         String
+  snapshotPeriod         String   // "1h", "6h", "24h", "48h", "7d"
+  views                  Int      @default(0)
+  likes                  Int      @default(0)
+  comments               Int      @default(0)
+  shares                 Int      @default(0)
+  subscribersGained      Int      @default(0)
+  viewedVsSwiped         Float?   // % who chose to view
+  avgViewDuration        Float?   // in seconds
+  avgPercentageViewed    Float?   // percentage e.g. 85.5%
+  estimatedRetentionRate Float?
+  rawAnalytics           Json?
+  fetchedAt              DateTime @default(now())
+
+  @@index([shortId])
+  @@index([youtubeVideoId])
+  @@index([snapshotPeriod])
+  @@index([fetchedAt])
+  @@map("performance_snapshots")
+}
+
+model LearningInsight {
+  id             String   @id @default(uuid())
+  category       String   // "FORMAT", "HOOK", "TOPIC_CATEGORY", "PACING", "RETENTION"
+  title          String
+  description    String
+  metric         String   // "avgPercentageViewed", "viewedVsSwiped", "views"
+  impactScore    Float    @default(0.0) // Relative lift or score
+  sampleSize     Int      @default(0)
+  confidence     String   @default("OBSERVATION") // "OBSERVATION", "HYPOTHESIS", "STRONG_PATTERN"
+  actionableRule String?
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([category])
+  @@index([confidence])
+  @@index([active])
+  @@map("learning_insights")
+}
+
+model StrategyRun {
+  id                  String   @id @default(uuid())
+  slotKey             String?
+  chosenFormat        String
+  chosenTopicCategory String
+  rationale           String
+  appliedInsights     Json?
+  createdAt           DateTime @default(now())
+
+  @@index([slotKey])
+  @@index([createdAt])
+  @@map("strategy_runs")
+}
+

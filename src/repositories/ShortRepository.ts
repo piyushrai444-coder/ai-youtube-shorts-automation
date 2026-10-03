@@ -102,6 +102,41 @@ export class ShortRepository {
       where: { id },
     });
   }
+
+  async findUploadedWithVideoId(limit: number = 50): Promise<Short[]> {
+    return prisma.short.findMany({
+      where: {
+        status: ShortStatus.UPLOADED,
+        youtubeVideoId: { not: null },
+      },
+      orderBy: { uploadedAt: 'desc' },
+      take: limit,
+      include: {
+        topic: true,
+        performanceSnapshots: {
+          orderBy: { fetchedAt: 'desc' },
+          take: 1,
+        },
+      },
+    });
+  }
+
+  async listUploadedForAnalysis(limit: number = 100): Promise<(Short & { performanceSnapshots: any[] })[]> {
+    return prisma.short.findMany({
+      where: {
+        status: ShortStatus.UPLOADED,
+        youtubeVideoId: { not: null },
+      },
+      include: {
+        performanceSnapshots: {
+          orderBy: { fetchedAt: 'desc' },
+        },
+        topic: true,
+      },
+      orderBy: { uploadedAt: 'desc' },
+      take: limit,
+    });
+  }
 }
 
 export const shortRepository = new ShortRepository();

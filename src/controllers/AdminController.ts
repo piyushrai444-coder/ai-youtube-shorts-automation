@@ -9,6 +9,11 @@ import { config } from '../config/index.js';
 import { logger } from '../utils/logger.js';
 import { ShortStatus } from '@prisma/client';
 
+import { learningRepository } from '../repositories/LearningRepository.js';
+import { topicRepository } from '../repositories/TopicRepository.js';
+import { youtubeAnalyticsService } from '../services/youtube/YouTubeAnalyticsService.js';
+import { performanceAnalyst } from '../services/learning/PerformanceAnalyst.js';
+
 export class AdminController {
   async showDashboard(req: Request, res: Response): Promise<void> {
     try {
@@ -19,6 +24,9 @@ export class AdminController {
       const isYouTubeConnected = await youtubeService.auth.isConnected();
       const channelInfo = await youtubeService.auth.getStoredChannelInfo();
       const hasAiKey = !!(config.llm.apiKey || (await settingRepository.getSecure('llm_api_key')));
+      const activeInsights = await learningRepository.getActiveInsights();
+      const activeExperiments = await learningRepository.getActiveExperiments();
+      const recentRuns = await learningRepository.getRecentStrategyRuns(3);
 
       const success = req.query.success as string;
       const error = req.query.error as string;
@@ -31,6 +39,9 @@ export class AdminController {
         isYouTubeConnected,
         channelInfo,
         hasAiKey,
+        activeInsights,
+        activeExperiments,
+        recentRuns,
         schedule: {
           short1: config.cron.short1Time,
           short2: config.cron.short2Time,
@@ -42,6 +53,110 @@ export class AdminController {
     } catch (err: any) {
       logger.error(`Error rendering admin dashboard: ${err.message}`);
       res.status(500).render('error', { title: 'Dashboard Error', message: err.message });
+    }
+  }
+
+  async showAnalytics(req: Request, res: Response): Promise<void> {
+    try {
+      const shorts = await shortRepository.listUploadedForAnalysis(50);
+      const snapshots = await learningRepository.getLatestSnapshots(30);
+
+      // Compute channel-level summary
+      let totalViews = 0;
+      let totalLikes = 0;
+      let totalComments = 0;
+      let sumApv = 0;
+      let countWithApv = 0;
+
+      for (const s of shorts) {
+        const snap = s.performanceSnapshots[0];
+        if (snap) {
+          totalViews += snap.views;
+          totalLikes += snap.likes;
+          totalComments += snap.comments;
+          if (snap.avgPercentageViewed) {
+            sumApv += snap.avgPercentageViewed;
+            countWithApv++;
+          }
+        }
+      }
+
+      const avgChannelApv = countWithApv > 0 ? Math.round((sumApv / countWithApv) * 10) / 10 : 0;
+
+      const success = req.query.success as string;
+      const error = req.query.error as string;
+
+      res.render('analytics/index', {
+        title: 'YouTube Shorts Analytics',
+        shorts,
+        snapshots,
+        channelSummary: {
+          totalViews,
+          totalLikes,
+          totalComments,
+          avgChannelApv,
+          totalTracked: shorts.length,
+        },
+        success,
+        error,
+      });
+    } catch (err: any) {
+      logger.error(`Error showing analytics: ${err.message}`);
+      res.status(500).render('error', { title: 'Analytics Error', message: err.message });
+    }
+  }
+
+  async showTopics(req: Request, res: Response): Promise<void> {
+    try {
+      const topics = await topicRepository.listRecent(50);
+      const success = req.query.success as string;
+      const error = req.query.error as string;
+
+      res.render('topics/index', {
+        title: 'Topic Intelligence & Trend Scoring',
+        topics,
+        success,
+        error,
+      });
+    } catch (err: any) {
+      logger.error(`Error showing topics: ${err.message}`);
+      res.status(500).render('error', { title: 'Topics Error', message: err.message });
+    }
+  }
+
+  async showLearning(req: Request, res: Response): Promise<void> {
+    try {
+      const insights = await learningRepository.getActiveInsights();
+      const experiments = await learningRepository.getActiveExperiments();
+      const strategyRuns = await learningRepository.getRecentStrategyRuns(15);
+      const success = req.query.success as string;
+      const error = req.query.error as string;
+
+      res.render('learning/index', {
+        title: 'Self-Learning System & Memory',
+        insights,
+        experiments,
+        strategyRuns,
+        success,
+        error,
+      });
+    } catch (err: any) {
+      logger.error(`Error showing learning panel: ${err.message}`);
+      res.status(500).render('error', { title: 'Learning Memory Error', message: err.message });
+    }
+  }
+
+  async triggerSyncAnalytics(req: Request, res: Response): Promise<void> {
+    try {
+      const snapshotResult = await youtubeAnalyticsService.updateAllRecentSnapshots(20);
+      const analysisResult = await performanceAnalyst.analyzeChannelPerformance();
+
+      res.redirect(
+        `/admin/analytics?success=Analytics+synced!+Updated+${snapshotResult.updatedCount}+snapshots+and+derived+${analysisResult.patternsIdentified}+learning+patterns.`
+      );
+    } catch (err: any) {
+      logger.error(`Manual analytics sync error: ${err.message}`);
+      res.redirect(`/admin/analytics?error=${encodeURIComponent(err.message)}`);
     }
   }
 

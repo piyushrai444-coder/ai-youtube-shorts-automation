@@ -74,7 +74,8 @@ describe('Research Engine & Duplicate Detection', () => {
       };
 
       // Mock DB finding existing topic
-      jest.spyOn(topicRepository, 'findByHash').mockResolvedValue({ id: 'existing-id' } as any);
+      jest.spyOn(topicRepository, 'findByHash').mockResolvedValue({ id: 'existing-id', used: true } as any);
+      jest.spyOn(topicRepository, 'findUnused').mockResolvedValue([]);
 
       const researchService = new ResearchService([mockProvider as any]);
       const results = await researchService.discoverTopics();

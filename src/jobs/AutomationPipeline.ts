@@ -2,9 +2,13 @@ import fs from 'fs';
 import { ShortStatus, JobStatus } from '@prisma/client';
 import { researchService } from '../services/research/ResearchService.js';
 import { aiService } from '../services/ai/AIService.js';
+import { strategyAgent } from '../services/strategy/StrategyAgent.js';
+import { hookAgent } from '../services/ai/HookAgent.js';
 import { videoService } from '../services/video/VideoService.js';
 import { storageService } from '../services/storage/StorageService.js';
 import { youtubeService } from '../services/youtube/YouTubeService.js';
+import { youtubeAnalyticsService } from '../services/youtube/YouTubeAnalyticsService.js';
+import { performanceAnalyst } from '../services/learning/PerformanceAnalyst.js';
 import { shortRepository } from '../repositories/ShortRepository.js';
 import { topicRepository } from '../repositories/TopicRepository.js';
 import { jobRepository } from '../repositories/JobRepository.js';
@@ -63,8 +67,13 @@ export class AutomationPipeline {
         return;
       }
 
-      // Step 1: Research Fresh AI Topics
-      logger.job(jobId, 'Step 1/8: Researching fresh AI topics...');
+      // Step 1: Content Strategy & Format Selection
+      logger.job(jobId, 'Step 1/8: Formulating content strategy & format allocation...');
+      const strategy = await strategyAgent.planNextShort(slotKey, category);
+      logger.job(jobId, `Selected strategy: Format=${strategy.format}, HookStyle=${strategy.hookStyle}`);
+
+      // Step 2: Research Fresh AI Topics
+      logger.job(jobId, 'Step 2/8: Researching fresh AI topics with multi-factor scoring...');
       await shortRepository.updateStatus(currentShortId, ShortStatus.RESEARCHING);
       const candidateTopics = await researchService.discoverTopics(undefined, category, jobId);
 
@@ -72,8 +81,8 @@ export class AutomationPipeline {
         throw new Error('Research yielded zero topics. Please verify research sources or internet connectivity.');
       }
 
-      // Step 2: Select Best Topic
-      logger.job(jobId, `Step 2/8: Selecting best topic from ${candidateTopics.length} candidates...`);
+      // Step 3: Select Best Topic
+      logger.job(jobId, `Step 3/8: Selecting best topic from ${candidateTopics.length} candidates...`);
       const selectedTopic = await aiService.selectBestTopic(candidateTopics, jobId);
       logger.job(jobId, `Selected topic: "${selectedTopic.title}" from ${selectedTopic.source}`);
 
@@ -84,14 +93,29 @@ export class AutomationPipeline {
       }
       await topicRepository.markUsed(dbTopic.id);
 
+      // Step 4: Hook Generation & Scoring (Generate 5+ variants and score)
+      logger.job(jobId, 'Step 4/8: Generating 5+ hook variants and selecting highest-retention hook...');
+      const hookResult = await hookAgent.generateAndSelectHooks(
+        selectedTopic,
+        strategy.format,
+        strategy.hookStyle,
+        currentShortId,
+        dbTopic.id,
+        jobId
+      );
+
       await shortRepository.update(currentShortId, {
         topic: { connect: { id: dbTopic.id } },
         category: selectedTopic.category,
+        format: strategy.format,
+        hookStyle: strategy.hookStyle,
+        selectedHook: hookResult.selectedHook.hookText,
+        ...(strategy.experimentId ? { experiment: { connect: { id: strategy.experimentId } } } : {}),
         status: ShortStatus.TOPIC_SELECTED,
       });
 
-      // Step 3: Generate & Validate Script (strict <= 30s)
-      logger.job(jobId, 'Step 3/8: Generating high-retention script with AI...');
+      // Step 5: Generate & Validate Script (strict <= 30s)
+      logger.job(jobId, 'Step 5/8: Generating high-retention script with AI...');
       const script = await aiService.generateAndValidateScript(
         {
           topicTitle: selectedTopic.title,
@@ -99,6 +123,9 @@ export class AutomationPipeline {
           sourceUrl: selectedTopic.sourceUrl,
           source: selectedTopic.source,
           category: selectedTopic.category,
+          format: strategy.format,
+          hookStyle: strategy.hookStyle,
+          selectedHook: hookResult.selectedHook.hookText,
           channelName: config.branding.channelName,
           defaultCta: config.branding.defaultCta,
         },
@@ -110,11 +137,13 @@ export class AutomationPipeline {
         script: script.fullScript,
         description: script.description,
         tags: script.tags.join(','),
+        viralityScore: script.viralityScore || null,
+        contentQualityScore: script.qualityScore || null,
         status: ShortStatus.SCRIPT_GENERATED,
       });
 
-      // Step 4 & 5 & 6: Produce Video (TTS Voiceover, Visuals, Captions, FFmpeg 9:16 Render)
-      logger.job(jobId, 'Step 4/8: Generating voiceover, visuals, captions & rendering video via FFmpeg...');
+      // Step 6: Produce Video (TTS Voiceover, Visuals, Captions, FFmpeg 9:16 Render)
+      logger.job(jobId, 'Step 6/8: Generating voiceover, visuals, captions & rendering video via FFmpeg...');
       await shortRepository.updateStatus(currentShortId, ShortStatus.VIDEO_GENERATING);
 
       const videoPackage = await videoService.produceShortVideo(script, jobId);
@@ -201,6 +230,16 @@ export class AutomationPipeline {
       });
 
       logger.job(jobId, `🎉 Pipeline completed successfully! Short is LIVE: ${youtubeResult.url}`);
+
+      // Asynchronously trigger analytics refresh & learning loop for self-improvement
+      Promise.resolve().then(async () => {
+        try {
+          await youtubeAnalyticsService.updateAllRecentSnapshots(15);
+          await performanceAnalyst.analyzeChannelPerformance();
+        } catch (analyticsErr: any) {
+          logger.warn(`Post-upload analytics refresh note: ${analyticsErr.message}`);
+        }
+      });
     } catch (err: any) {
       logger.error(`Pipeline failure: ${err.message}`, undefined, jobId);
 

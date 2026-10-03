@@ -82,8 +82,12 @@
 
             <!-- Content Area -->
             <div class="p-4 flex-1 flex flex-col justify-between">
-              <div>
-                <span class="text-[11px] font-semibold uppercase tracking-wider text-indigo-400"><%= short.category %></span>
+                <div class="flex items-center justify-between">
+                  <span class="text-[11px] font-semibold uppercase tracking-wider text-indigo-400"><%= short.category %></span>
+                  <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-slate-800 text-indigo-300 border border-indigo-500/20">
+                    <%= short.format || 'TOOL_DISCOVERY' %>
+                  </span>
+                </div>
                 <h3 class="font-bold text-sm text-white mt-1 line-clamp-2"><%= short.title || 'Generating title...' %></h3>
                 <p class="text-xs text-slate-400 mt-2 line-clamp-2"><%= short.script || 'Script synthesizing...' %></p>
               </div>

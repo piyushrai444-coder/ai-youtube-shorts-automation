@@ -103,6 +103,46 @@
           <% } %>
         </div>
 
+        <!-- Strategy & Hook Intelligence -->
+        <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+              <span>Growth Strategy & Hook Execution</span>
+            </h3>
+            <% if (short.performanceClass) { %>
+              <span class="px-2 py-0.5 text-xs font-bold rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                <%= short.performanceClass %>
+              </span>
+            <% } %>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            <div class="p-3 rounded-xl bg-slate-950/60 border border-slate-800/60">
+              <div class="text-slate-500 uppercase tracking-wider text-[10px]">Format</div>
+              <div class="font-semibold text-indigo-300 mt-1"><%= short.format || 'TOOL_DISCOVERY' %></div>
+            </div>
+            <div class="p-3 rounded-xl bg-slate-950/60 border border-slate-800/60">
+              <div class="text-slate-500 uppercase tracking-wider text-[10px]">Hook Style</div>
+              <div class="font-semibold text-slate-200 mt-1"><%= short.hookStyle || 'CURIOSITY_GAP' %></div>
+            </div>
+            <div class="p-3 rounded-xl bg-slate-950/60 border border-slate-800/60">
+              <div class="text-slate-500 uppercase tracking-wider text-[10px]">Virality Score</div>
+              <div class="font-bold text-emerald-400 mt-1"><%= short.viralityScore ? short.viralityScore + '/100' : 'N/A' %></div>
+            </div>
+            <div class="p-3 rounded-xl bg-slate-950/60 border border-slate-800/60">
+              <div class="text-slate-500 uppercase tracking-wider text-[10px]">Quality Gate</div>
+              <div class="font-bold text-sky-400 mt-1"><%= short.contentQualityScore ? short.contentQualityScore + '/100' : 'Passed' %></div>
+            </div>
+          </div>
+
+          <% if (short.selectedHook) { %>
+            <div class="p-3 rounded-xl bg-indigo-950/30 border border-indigo-500/20 text-xs">
+              <span class="text-indigo-400 font-semibold block mb-0.5">Winning Selected Hook:</span>
+              <span class="text-slate-200 italic">"<%= short.selectedHook %>"</span>
+            </div>
+          <% } %>
+        </div>
+
         <!-- Script Breakdown -->
         <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-6">
           <h3 class="text-sm font-bold text-white mb-4 flex items-center gap-2">

@@ -57,6 +57,26 @@ export class CronController {
       res.status(500).json({ error: 'Internal Server Error', message: err.message });
     }
   }
+
+  async handleSyncAnalytics(req: Request, res: Response): Promise<void> {
+    try {
+      logger.info('[CronController] Triggering analytics sync and learning analysis...');
+      const { youtubeAnalyticsService } = await import('../services/youtube/YouTubeAnalyticsService.js');
+      const { performanceAnalyst } = await import('../services/learning/PerformanceAnalyst.js');
+
+      const snapshotResult = await youtubeAnalyticsService.updateAllRecentSnapshots(25);
+      const analysisResult = await performanceAnalyst.analyzeChannelPerformance();
+
+      res.json({
+        success: true,
+        snapshots: snapshotResult,
+        analysis: analysisResult,
+      });
+    } catch (err: any) {
+      logger.error(`Error in sync analytics cron: ${err.message}`);
+      res.status(500).json({ error: 'Internal Server Error', message: err.message });
+    }
+  }
 }
 
 export const cronController = new CronController();

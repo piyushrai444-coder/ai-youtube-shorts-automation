@@ -33,6 +33,33 @@ export class VisualService {
     // CTA takes remainder to ensure exact sum equals totalDurationSeconds
     const ctaDur = Math.max(3.0, totalDurationSeconds - (hookDur + explDur + benefitDur));
 
+    const format = script.format || 'TOOL_DISCOVERY';
+    let h1 = 'Core Capabilities';
+    let h2 = 'Why It Matters';
+    let h3 = 'Stay Ahead in AI';
+
+    if (format === 'DEMONSTRATION') {
+      h1 = '⚡ Live Demonstration';
+      h2 = '🔮 Real-Time Results';
+      h3 = '🚀 Try This Prompt';
+    } else if (format === 'PROBLEM_SOLUTION') {
+      h1 = '🛑 The Old Problem';
+      h2 = '✅ The AI Solution';
+      h3 = '⚡ Automate It Today';
+    } else if (format === 'COMPARISON') {
+      h1 = '⚔️ Side-by-Side Test';
+      h2 = '🏆 The Real Winner';
+      h3 = '💬 What Do You Think?';
+    } else if (format === 'HIDDEN_FEATURE') {
+      h1 = '🔓 Secret Feature';
+      h2 = '💡 Unfair Advantage';
+      h3 = '🔥 Don’t Miss Out';
+    } else if (format === 'BEFORE_AFTER') {
+      h1 = '⏳ Before vs After';
+      h2 = '📈 10x Speed Difference';
+      h3 = '🔗 Link in Description';
+    }
+
     const scenes: VisualScene[] = [
       {
         index: 0,
@@ -45,7 +72,7 @@ export class VisualService {
       {
         index: 1,
         type: 'explanation',
-        headline: 'Core Capabilities',
+        headline: h1,
         bodyText: script.explanation,
         category: script.category,
         durationSeconds: explDur,
@@ -53,7 +80,7 @@ export class VisualService {
       {
         index: 2,
         type: 'benefit',
-        headline: 'Why It Matters',
+        headline: h2,
         bodyText: script.benefit,
         category: script.category,
         durationSeconds: benefitDur,
@@ -61,7 +88,7 @@ export class VisualService {
       {
         index: 3,
         type: 'cta',
-        headline: 'Stay Ahead in AI',
+        headline: h3,
         bodyText: script.cta,
         category: script.category,
         durationSeconds: ctaDur,

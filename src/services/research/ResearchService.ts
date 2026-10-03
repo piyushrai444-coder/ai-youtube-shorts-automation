@@ -2,6 +2,7 @@ import { ResearchProvider, ResearchResult } from '../../types/index.js';
 import { RssResearchProvider, rssResearchProvider } from './RssResearchProvider.js';
 import { SearchApiProvider, searchApiProvider } from './SearchApiProvider.js';
 import { topicRepository } from '../../repositories/TopicRepository.js';
+import { topicScorer } from './TopicScorer.js';
 import { logger } from '../../utils/logger.js';
 import { config } from '../../config/index.js';
 
@@ -55,18 +56,11 @@ export class ResearchService {
     }
 
     // Deduplication & Filtering
-    const uniqueCandidates: ResearchResult[] = [];
     const seenUrls = new Set<string>();
     const seenTitles = new Set<string>();
+    const dedupedPool: ResearchResult[] = [];
 
-    // Sort by priority score and freshness, evaluating top 30 candidate items
-    const candidatePool = allDiscovered
-      .sort((a, b) => ((b.score ?? 0) - (a.score ?? 0)) || ((b.publishedAt?.getTime() ?? 0) - (a.publishedAt?.getTime() ?? 0)))
-      .slice(0, 30);
-
-    logger.job(jobId || 'sys', `Evaluating ${candidatePool.length} freshest candidate topics...`);
-
-    for (const item of candidatePool) {
+    for (const item of allDiscovered) {
       const normalizedUrl = item.sourceUrl.trim().toLowerCase();
       const normalizedTitle = item.title.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
 
@@ -75,7 +69,19 @@ export class ResearchService {
       }
       seenUrls.add(normalizedUrl);
       seenTitles.add(normalizedTitle);
+      dedupedPool.push(item);
+    }
 
+    // Step 2: Multi-Factor Topic Scoring (Freshness, Utility, Curiosity, Visual, Trend, Competition)
+    logger.job(jobId || 'sys', `Scoring top ${Math.min(dedupedPool.length, 50)} candidate topics with multi-factor engine...`);
+    const scoredCandidates = topicScorer.scoreTopics(dedupedPool.slice(0, 50));
+
+    // Sort by finalScore descending
+    scoredCandidates.sort((a, b) => b.finalScore - a.finalScore);
+
+    const uniqueCandidates: ResearchResult[] = [];
+
+    for (const item of scoredCandidates) {
       // Check database for duplicates
       const existingByHash = await topicRepository.findByHash(item.contentHash);
       if (existingByHash) {
@@ -87,7 +93,7 @@ export class ResearchService {
             publishedAt: existingByHash.publishedAt || existingByHash.discoveredAt,
             summary: existingByHash.summary,
             category: existingByHash.category,
-            score: existingByHash.score,
+            score: existingByHash.finalScore || existingByHash.score,
             contentHash: existingByHash.contentHash,
           });
         }
@@ -104,14 +110,14 @@ export class ResearchService {
             publishedAt: existingByUrl.publishedAt || existingByUrl.discoveredAt,
             summary: existingByUrl.summary,
             category: existingByUrl.category,
-            score: existingByUrl.score,
+            score: existingByUrl.finalScore || existingByUrl.score,
             contentHash: existingByUrl.contentHash,
           });
         }
         continue;
       }
 
-      // Save fresh candidate to DB
+      // Save fresh scored candidate to DB
       try {
         await topicRepository.create(item);
         uniqueCandidates.push(item);
@@ -124,7 +130,7 @@ export class ResearchService {
     if (uniqueCandidates.length === 0) {
       logger.job(jobId || 'sys', 'Querying unused candidate topics from database...');
       try {
-        const unused = await topicRepository.findUnused(15);
+        const unused = await topicRepository.findUnused(15, categoryFilter);
         if (unused && unused.length > 0) {
           for (const t of unused) {
             uniqueCandidates.push({
@@ -134,7 +140,7 @@ export class ResearchService {
               publishedAt: t.publishedAt || t.discoveredAt,
               summary: t.summary,
               category: t.category,
-              score: t.score,
+              score: t.finalScore || t.score,
               contentHash: t.contentHash,
             });
           }

@@ -64,6 +64,11 @@ export class AIService {
         const validation = QualityChecker.validate(script);
         if (validation.isValid) {
           const virality = ViralityEngine.evaluateVirality(script);
+          script.viralityScore = virality.overallScore;
+          script.qualityScore = virality.overallScore;
+          script.format = input.format || script.format;
+          script.hookStyle = input.hookStyle || script.hookStyle;
+
           logger.job(
             jobId || 'sys',
             `Script passed quality checks (${validation.wordCount} words, est. ${validation.estimatedDurationSeconds}s). Virality Score: ${virality.overallScore}/100 [Hook: ${virality.hookScore}/25, Loop: ${virality.loopScore}/25, Pacing: ${virality.pacingScore}/25, Engagement: ${virality.engagementScore}/25]`
@@ -71,6 +76,17 @@ export class AIService {
           if (virality.feedback.length > 0) {
             logger.job(jobId || 'sys', `Virality Tips: ${virality.feedback.join(' | ')}`);
           }
+
+          // If virality score is below 60 on first attempt, retry for a sharper script
+          if (virality.overallScore < 60 && attempts < maxAttempts) {
+            logger.warn(
+              `Script virality score (${virality.overallScore}/100) below threshold. Retrying attempt ${attempts + 1}...`,
+              undefined,
+              jobId
+            );
+            continue;
+          }
+
           return script;
         }
 

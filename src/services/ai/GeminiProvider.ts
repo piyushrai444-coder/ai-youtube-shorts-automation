@@ -74,23 +74,26 @@ Respond with ONLY the integer index of the selected topic inside brackets like [
     const cta = input.defaultCta || config.branding.defaultCta;
     const channelName = input.channelName || config.branding.channelName;
 
+    const formatInstruction = input.format ? `CONTENT FORMAT: ${input.format}` : 'CONTENT FORMAT: TOOL_DISCOVERY';
+    const hookInstruction = input.selectedHook
+      ? `USE THIS PROVEN HOOK (or slight adaptation keeping core meaning): "${input.selectedHook}"`
+      : `HOOK (8-14 words): Use a high-curiosity pattern interrupt (e.g. "Stop doing [X] until you see this new AI tool...").`;
+
     const prompt = `You are a world-class viral YouTube Shorts creator and algorithm strategist for the channel "${channelName}".
 Your mission is to maximize two critical YouTube Shorts metrics:
 1. "Viewed vs Swiped Away" (Hook retention in the first 2 seconds)
 2. "Average Percentage Viewed" (Aiming for >100% completion via a Seamless Infinite Loop)
 
+${formatInstruction}
+
 STRICT SCRIPT RULES:
-1. TOTAL SPOKEN WORDS: MUST be between 58 and 72 words (ideal 23-26 seconds video length). Never exceed 76 words.
-2. HOOK (8-14 words): Use one of these proven viral pattern interrupts:
-   - "Stop using [X] until you see this new AI tool..."
-   - "This brand new AI tool feels completely illegal to know..."
-   - "Nobody is talking about how this new AI does [X] in seconds..."
-   - "If you want to 10x your productivity today, watch this..."
+1. TOTAL SPOKEN WORDS: MUST be between 58 and 72 words (ideal 22-26 seconds video length). Never exceed 76 words.
+2. ${hookInstruction}
 3. EXPLANATION (22-30 words):
    - Explain the core superpower simply, clearly, with zero fluff or boring intro. What does it solve?
 4. BENEFIT (14-18 words):
    - Tangible, jaw-dropping payoff: hours saved, workflows automated, or free access.
-5. CTA + SEAMLESS INFINITE LOOP (12-16 words):
+5. CTA + SEAMLESS INFINITE LOOP (10-14 words):
    - Spark comment engagement by asking a question (e.g. "Would you use this? Comment below!").
    - Crucial: End with a transition phrase that connects syntactically into your hook when the video loops back! (e.g. "...which is why everyone is checking out..." or "...and that is why you should...").
 6. TITLE:
@@ -168,6 +171,8 @@ Return ONLY a JSON object matching this schema:
       tags: parsed.tags || ['AI', 'Tech', 'AITools'],
       description: parsed.description || `${parsed.title}\n\nSource: ${input.sourceUrl}\n\n${cta}\n\n#AI #AITools #Shorts`,
       category: input.category,
+      format: input.format,
+      hookStyle: input.hookStyle,
     };
   }
 }

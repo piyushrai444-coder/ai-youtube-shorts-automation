@@ -15,7 +15,15 @@ export class TopicRepository {
     });
   }
 
-  async create(data: ResearchResult): Promise<Topic> {
+  async create(data: ResearchResult & Partial<{
+    freshnessScore: number;
+    trendScore: number;
+    usefulnessScore: number;
+    visualScore: number;
+    finalScore: number;
+    sourceCount: number;
+    company: string;
+  }>): Promise<Topic> {
     return prisma.topic.create({
       data: {
         title: data.title,
@@ -26,14 +34,41 @@ export class TopicRepository {
         publishedAt: data.publishedAt,
         contentHash: data.contentHash,
         score: data.score || 0.0,
+        freshnessScore: data.freshnessScore || 0.0,
+        trendScore: data.trendScore || 0.0,
+        usefulnessScore: data.usefulnessScore || 0.0,
+        visualScore: data.visualScore || 0.0,
+        finalScore: data.finalScore || data.score || 0.0,
+        sourceCount: data.sourceCount || 1,
+        company: data.company || null,
       },
     });
   }
 
-  async findUnused(limit: number = 20): Promise<Topic[]> {
+  async updateScores(id: string, scores: {
+    freshnessScore?: number;
+    trendScore?: number;
+    usefulnessScore?: number;
+    visualScore?: number;
+    finalScore?: number;
+    sourceCount?: number;
+    company?: string;
+  }): Promise<Topic> {
+    return prisma.topic.update({
+      where: { id },
+      data: scores,
+    });
+  }
+
+  async findUnused(limit: number = 20, category?: string): Promise<Topic[]> {
+    const where: any = { used: false };
+    if (category) {
+      where.category = category;
+    }
     return prisma.topic.findMany({
-      where: { used: false },
+      where,
       orderBy: [
+        { finalScore: 'desc' },
         { score: 'desc' },
         { discoveredAt: 'desc' },
       ],
@@ -50,9 +85,12 @@ export class TopicRepository {
 
   async listRecent(limit: number = 20): Promise<Topic[]> {
     return prisma.topic.findMany({
-      orderBy: { discoveredAt: 'desc' },
+      orderBy: [
+        { finalScore: 'desc' },
+        { discoveredAt: 'desc' },
+      ],
       take: limit,
-      include: { shorts: true },
+      include: { shorts: true, hookVariants: true },
     });
   }
 }

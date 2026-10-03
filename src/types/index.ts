@@ -14,15 +14,79 @@ export interface ResearchProvider {
   search(query?: string, category?: string): Promise<ResearchResult[]>;
 }
 
+export type ContentFormat =
+  | 'TOOL_DISCOVERY'
+  | 'DEMONSTRATION'
+  | 'PROBLEM_SOLUTION'
+  | 'COMPARISON'
+  | 'HIDDEN_FEATURE'
+  | 'BEFORE_AFTER'
+  | 'AI_NEWS'
+  | 'CHALLENGE';
+
+export type HookStyle =
+  | 'CURIOSITY_GAP'
+  | 'CONTRARIAN'
+  | 'RESULT_FIRST'
+  | 'PROBLEM_AGITATION'
+  | 'RELATABLE_FRUSTRATION';
+
+export type PerformanceClass =
+  | 'TOP_PERFORMER'
+  | 'ABOVE_AVERAGE'
+  | 'AVERAGE'
+  | 'BELOW_AVERAGE'
+  | 'POOR';
+
+export interface TopicScoreBreakdown {
+  freshnessScore: number;
+  trendScore: number;
+  usefulnessScore: number;
+  visualScore: number;
+  demoScore: number;
+  competitionPenalty: number;
+  finalScore: number;
+  company?: string;
+  sourceCount: number;
+}
+
+export interface ScoredTopic extends ResearchResult, TopicScoreBreakdown {
+  id?: string;
+}
+
+export interface HookVariantItem {
+  hookText: string;
+  patternType: string;
+  clarityScore: number;
+  curiosityScore: number;
+  specificityScore: number;
+  valueScore: number;
+  totalScore: number;
+  selected?: boolean;
+}
+
+export interface StrategyDecision {
+  format: ContentFormat;
+  hookStyle: HookStyle;
+  targetAudienceAngle: string;
+  experimentId?: string;
+  rationale: string;
+  visualTheme: 'PRODUCT_DEMO' | 'CYBERPUNK_HUD' | 'SPLIT_COMPARISON' | 'MINIMAL_TECH';
+}
+
 export interface ScriptInput {
   topicTitle: string;
   summary: string;
   sourceUrl: string;
   source: string;
   category: string;
+  format?: ContentFormat;
+  hookStyle?: HookStyle;
   targetDurationSeconds?: number;
   channelName?: string;
   defaultCta?: string;
+  selectedHook?: string;
+  strategyRationale?: string;
 }
 
 export interface GeneratedScript {
@@ -37,6 +101,10 @@ export interface GeneratedScript {
   tags: string[];
   description: string;
   category: string;
+  format?: ContentFormat;
+  hookStyle?: HookStyle;
+  qualityScore?: number;
+  viralityScore?: number;
 }
 
 export interface LLMProvider {
@@ -135,3 +203,28 @@ export interface ValidationResult {
   aspectRatio?: string;
   error?: string;
 }
+
+export interface VideoAnalyticsMetric {
+  views: number;
+  likes: number;
+  comments: number;
+  shares: number;
+  subscribersGained: number;
+  viewedVsSwiped?: number;
+  avgViewDuration?: number;
+  avgPercentageViewed?: number;
+  estimatedRetentionRate?: number;
+  rawAnalytics?: any;
+}
+
+export interface LearningInsightData {
+  category: 'FORMAT' | 'HOOK' | 'TOPIC_CATEGORY' | 'PACING' | 'RETENTION';
+  title: string;
+  description: string;
+  metric: string;
+  impactScore: number;
+  sampleSize: number;
+  confidence: 'OBSERVATION' | 'HYPOTHESIS' | 'STRONG_PATTERN';
+  actionableRule?: string;
+}
+
