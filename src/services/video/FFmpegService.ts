@@ -122,6 +122,7 @@ export class FFmpegService {
         'scale=1080:1920:force_original_aspect_ratio=decrease',
         'pad=1080:1920:(ow-iw)/2:(oh-ih)/2:color=black',
         'fps=30',
+        "zoompan=z='if(lte(mod(on,120),60),zoom+0.0008,zoom-0.0008)':d=1:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s=1080x1920:fps=30",
         'format=yuv420p',
       ];
 

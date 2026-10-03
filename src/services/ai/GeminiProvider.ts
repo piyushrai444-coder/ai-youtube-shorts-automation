@@ -74,19 +74,30 @@ Respond with ONLY the integer index of the selected topic inside brackets like [
     const cta = input.defaultCta || config.branding.defaultCta;
     const channelName = input.channelName || config.branding.channelName;
 
-    const prompt = `You are an elite YouTube Shorts scriptwriter for the channel "${channelName}".
-Transform this researched AI news/tool into a punchy, viral YouTube Short.
+    const prompt = `You are a world-class viral YouTube Shorts creator and algorithm strategist for the channel "${channelName}".
+Your mission is to maximize two critical YouTube Shorts metrics:
+1. "Viewed vs Swiped Away" (Hook retention in the first 2 seconds)
+2. "Average Percentage Viewed" (Aiming for >100% completion via a Seamless Infinite Loop)
 
-STRICT CONSTRAINTS:
-1. TOTAL SPOKEN WORDS MUST BE BETWEEN 55 AND 75 WORDS. NEVER EXCEED 80 WORDS (Video must finish in 30 seconds or less).
-2. STRUCTURE:
-   - Hook (1 sentence, 8-15 words): Grab attention immediately with an astonishing fact or question.
-   - Explanation (2-3 sentences, 25-35 words): What the tool does in simple, plain English.
-   - Benefit (1-2 sentences, 15-20 words): Why it matters and how it saves time or supercharges productivity.
-   - CTA (1 sentence, 5-8 words): Call to action like "${cta}".
-3. FACTUALITY: Only state features supported by the source. No hallucinations, no fake stats.
-4. TITLE: High CTR, under 65 characters, exciting with 1 emoji.
-5. TAGS: 5 to 7 relevant tags.
+STRICT SCRIPT RULES:
+1. TOTAL SPOKEN WORDS: MUST be between 58 and 72 words (ideal 23-26 seconds video length). Never exceed 76 words.
+2. HOOK (8-14 words): Use one of these proven viral pattern interrupts:
+   - "Stop using [X] until you see this new AI tool..."
+   - "This brand new AI tool feels completely illegal to know..."
+   - "Nobody is talking about how this new AI does [X] in seconds..."
+   - "If you want to 10x your productivity today, watch this..."
+3. EXPLANATION (22-30 words):
+   - Explain the core superpower simply, clearly, with zero fluff or boring intro. What does it solve?
+4. BENEFIT (14-18 words):
+   - Tangible, jaw-dropping payoff: hours saved, workflows automated, or free access.
+5. CTA + SEAMLESS INFINITE LOOP (12-16 words):
+   - Spark comment engagement by asking a question (e.g. "Would you use this? Comment below!").
+   - Crucial: End with a transition phrase that connects syntactically into your hook when the video loops back! (e.g. "...which is why everyone is checking out..." or "...and that is why you should...").
+6. TITLE:
+   - High CTR, emotional urgency, caps for emphasis, 1 emoji, followed by #Shorts (e.g. "This New AI Tool Feels ILLEGAL To Know 🤯 #Shorts").
+7. TAGS: 6 high-ranking viral tags including "AI", "AITools", "Shorts", "TechHacks", "Productivity".
+8. DESCRIPTION:
+   - Punchy summary, source link credit: ${input.sourceUrl}, and pinned comment call to action.
 
 RESEARCHED TOPIC:
 Title: ${input.topicTitle}
@@ -96,13 +107,13 @@ Category: ${input.category}
 
 Return ONLY a JSON object matching this schema:
 {
-  "title": "Short title with emoji",
-  "hook": "Hook sentence",
-  "explanation": "Explanation sentences",
-  "benefit": "Main benefit sentences",
-  "cta": "CTA sentence",
-  "tags": ["AI", "AITools", "Tech"],
-  "description": "Short YouTube description with hashtags and source credit: ${input.sourceUrl}"
+  "title": "Viral high-CTR title with emoji #Shorts",
+  "hook": "Hook sentence with pattern interrupt",
+  "explanation": "Core superpower explanation",
+  "benefit": "Tangible benefit and payoff",
+  "cta": "Engaging question and loop transition back to hook",
+  "tags": ["AI", "AITools", "Tech", "Productivity", "Shorts"],
+  "description": "Short description with hashtags and credit to ${input.sourceUrl}"
 }`;
 
     const candidateModels = [

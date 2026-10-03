@@ -2,6 +2,7 @@ import { LLMProvider, ScriptInput, GeneratedScript, ResearchResult } from './LLM
 import { GeminiProvider } from './GeminiProvider.js';
 import { OpenAIProvider } from './OpenAIProvider.js';
 import { QualityChecker } from './QualityChecker.js';
+import { ViralityEngine } from './ViralityEngine.js';
 import { logger } from '../../utils/logger.js';
 import { config } from '../../config/index.js';
 
@@ -62,10 +63,14 @@ export class AIService {
 
         const validation = QualityChecker.validate(script);
         if (validation.isValid) {
+          const virality = ViralityEngine.evaluateVirality(script);
           logger.job(
             jobId || 'sys',
-            `Script passed quality checks (${validation.wordCount} words, est. ${validation.estimatedDurationSeconds}s)`
+            `Script passed quality checks (${validation.wordCount} words, est. ${validation.estimatedDurationSeconds}s). Virality Score: ${virality.overallScore}/100 [Hook: ${virality.hookScore}/25, Loop: ${virality.loopScore}/25, Pacing: ${virality.pacingScore}/25, Engagement: ${virality.engagementScore}/25]`
           );
+          if (virality.feedback.length > 0) {
+            logger.job(jobId || 'sys', `Virality Tips: ${virality.feedback.join(' | ')}`);
+          }
           return script;
         }
 
