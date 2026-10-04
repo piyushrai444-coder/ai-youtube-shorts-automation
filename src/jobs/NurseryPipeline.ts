@@ -135,7 +135,14 @@ export class NurseryPipeline {
       const vocalsAudioPath = path.join(workDir, 'vocals.mp3');
       await fs.promises.writeFile(vocalsAudioPath, vocals.audioBuffer);
 
-      const totalAudioDuration = vocals.durationSeconds > 0 ? vocals.durationSeconds : songDuration;
+      // Enforce valid nursery song duration bounds (Shorts: 40-55s, Full: 90-180s)
+      const minShortDur = videoType === 'SHORT' ? 40 : 90;
+      const maxShortDur = videoType === 'SHORT' ? 58 : 180;
+      const targetShortDur = songDuration || (videoType === 'SHORT' ? 45 : 120);
+      const totalAudioDuration = Math.max(
+        minShortDur,
+        Math.min(maxShortDur, Math.max(vocals.durationSeconds, targetShortDur))
+      );
 
       const subtitlesPath = path.join(workDir, 'karaoke_subtitles.srt');
       await karaokeSubtitleService.generateKaraokeSrt(lyrics, totalAudioDuration, subtitlesPath);
@@ -154,12 +161,15 @@ export class NurseryPipeline {
       );
 
       const sceneImageFiles: { imagePath: string; duration: number }[] = [];
+      const totalRawSceneDur = visualScenes.reduce((sum, s) => sum + s.durationSeconds, 0);
+      const sceneScale = totalRawSceneDur > 0 ? totalAudioDuration / totalRawSceneDur : 1.0;
+
       for (const scene of visualScenes) {
         const sceneImgPath = path.join(workDir, `nursery_scene_${scene.sceneIndex}.png`);
         await fs.promises.writeFile(sceneImgPath, scene.imageBuffer);
         sceneImageFiles.push({
           imagePath: sceneImgPath,
-          duration: scene.durationSeconds,
+          duration: scene.durationSeconds * sceneScale,
         });
       }
 

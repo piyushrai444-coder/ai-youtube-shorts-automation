@@ -42,14 +42,20 @@ Content Mode: ${idea.contentMode}
 Target Age: ${idea.targetAge} (Preschool)
 Learning Objective: ${idea.learningObjective}
 Characters: ${idea.characters.join(', ')}
-Target Duration: Exactly ${targetDuration} seconds (${videoType === 'SHORT' ? '30-60s Short clip' : '90-180s full preschool song'})
+Target Duration: Exactly ${targetDuration} seconds (${videoType === 'SHORT' ? '40-50s Short clip' : '90-180s full preschool song'})
 Tempo: ${bpm} BPM
 Key: ${musicalKey}
 
 SONGWRITING RULES:
 1. Repetitive, simple, cheerful preschool lyrics (AABB or AAAA rhyme scheme).
-2. Repetitive chorus children can sing along with after hearing once.
-3. Include active verbs and physical movements (clap, jump, spin, stomp, wave, touch head).
+2. MUST generate at least 5 to 6 distinct structured sections:
+   - "intro" (4-5s): Friendly welcome & call-to-action
+   - "verse" (10-12s): Introducing the concept or theme with cute preschool rhymes
+   - "chorus" (10-12s): Catchy, high-repetition sing-along hook
+   - "action_break" (6-8s): Movement instructions (clap, jump, spin, stomp, freeze)
+   - "chorus" (8-10s): Energetic repeat of the main chorus
+   - "outro" (4-5s): Joyful celebration finale with applause and high-fives
+3. Must include at least 10-14 rhyming lines total so the spoken and sung duration is at least 40 to 48 seconds.
 4. Include interactive call-and-response ("What color is this? RED!", "Can you jump? JUMP!").
 5. ZERO copyrighted lyrics or melodies. 100% original.
 
@@ -71,7 +77,7 @@ OUTPUT VALID JSON ONLY with this exact schema:
       "startSec": 0,
       "endSec": 5,
       "durationSec": 5,
-      "lyrics": "Are you ready to sing and dance? Here we go!",
+      "lyrics": "Are you ready to sing and dance? Come along, here we go!",
       "rhymeScheme": "intro",
       "leadCharacter": "${idea.characters[0] || 'Leo'}",
       "choreography": ["WAVE", "BOUNCE"],
@@ -82,16 +88,64 @@ OUTPUT VALID JSON ONLY with this exact schema:
       "sfxCue": "chime"
     },
     {
+      "type": "verse",
+      "title": "Discovery Verse",
+      "startSec": 5,
+      "endSec": 16,
+      "durationSec": 11,
+      "lyrics": "Look around and see the sun! Counting numbers, having fun! One and two and three so bright, glowing with a happy light!",
+      "rhymeScheme": "AABB",
+      "leadCharacter": "${idea.characters[1] || 'Mia'}",
+      "choreography": ["POINT", "BOUNCE"],
+      "sfxCue": "sparkle"
+    },
+    {
       "type": "chorus",
       "title": "Main Sing-Along Chorus",
-      "startSec": 5,
-      "endSec": 20,
-      "durationSec": 15,
-      "lyrics": "Red, red, red, look at the train! Choo choo choo, here once again!",
+      "startSec": 16,
+      "endSec": 28,
+      "durationSec": 12,
+      "lyrics": "Clap your paws and sing out loud! Stand up tall and feel so proud! Jump up high and touch the sky, watch the happy birdies fly!",
       "rhymeScheme": "AABB",
       "leadCharacter": "${idea.characters[0] || 'Leo'}",
       "choreography": ["CLAP", "JUMP"],
       "sfxCue": "whistle"
+    },
+    {
+      "type": "action_break",
+      "title": "Action Dance Break",
+      "startSec": 28,
+      "endSec": 36,
+      "durationSec": 8,
+      "lyrics": "Now freeze! Jump up high! Spin around once! And clap, clap, clap!",
+      "rhymeScheme": "action",
+      "leadCharacter": "${idea.characters[2] || 'Toby'}",
+      "choreography": ["JUMP", "SPIN", "CLAP"],
+      "sfxCue": "boing"
+    },
+    {
+      "type": "chorus",
+      "title": "Encore Sing-Along Chorus",
+      "startSec": 36,
+      "endSec": 44,
+      "durationSec": 8,
+      "lyrics": "Clap your paws and sing out loud! Stand up tall and feel so proud! Sing together, me and you!",
+      "rhymeScheme": "AABB",
+      "leadCharacter": "${idea.characters[0] || 'Leo'}",
+      "choreography": ["CLAP", "JUMP"],
+      "sfxCue": "chime"
+    },
+    {
+      "type": "outro",
+      "title": "Celebration Finale",
+      "startSec": 44,
+      "endSec": 48,
+      "durationSec": 4,
+      "lyrics": "Yay! High five, everybody! See you next time!",
+      "rhymeScheme": "outro",
+      "leadCharacter": "${idea.characters[0] || 'Leo'}",
+      "choreography": ["WAVE", "CLAP"],
+      "sfxCue": "applause"
     }
   ]
 }`;
@@ -150,7 +204,7 @@ OUTPUT VALID JSON ONLY with this exact schema:
   ): StructuredSongLyrics {
     let currentTime = 0;
     const normalizedSections: LyricSectionItem[] = raw.sections.map((sec, idx) => {
-      const dur = Math.max(4, Number(sec.durationSec) || 10);
+      const dur = Math.max(5, Number(sec.durationSec) || 8);
       const start = currentTime;
       const end = start + dur;
       currentTime = end;
@@ -170,7 +224,67 @@ OUTPUT VALID JSON ONLY with this exact schema:
       };
     });
 
-    const totalDur = normalizedSections.reduce((sum, s) => sum + (s.durationSec || 5), 0);
+    const minTarget = targetDuration <= 60 ? 42 : 90;
+
+    // 1. Ensure action_break exists with interactive movement
+    const hasAction = normalizedSections.some((s) => s.type === 'action_break');
+    if (!hasAction) {
+      const actDur = 8;
+      normalizedSections.push({
+        type: 'action_break',
+        title: 'Action Dance Break',
+        startSec: currentTime,
+        endSec: currentTime + actDur,
+        durationSec: actDur,
+        lyrics: 'Now jump up high! Touch the sky! Turn around once! And freeze!',
+        rhymeScheme: 'action',
+        leadCharacter: idea.characters[1 % idea.characters.length] || 'Mia',
+        choreography: ['JUMP', 'SPIN', 'CLAP'],
+        sfxCue: 'boing',
+      });
+      currentTime += actDur;
+    }
+
+    // 2. Ensure at least two choruses for preschool retention
+    const chorusCount = normalizedSections.filter((s) => s.type === 'chorus').length;
+    const primaryChorus = normalizedSections.find((s) => s.type === 'chorus');
+    if (chorusCount < 2 && primaryChorus) {
+      const repDur = 8;
+      normalizedSections.push({
+        type: 'chorus',
+        title: 'Encore Sing-Along Chorus',
+        startSec: currentTime,
+        endSec: currentTime + repDur,
+        durationSec: repDur,
+        lyrics: primaryChorus.lyrics,
+        rhymeScheme: 'AABB',
+        leadCharacter: idea.characters[0] || 'Leo',
+        choreography: ['CLAP', 'JUMP'],
+        sfxCue: 'chime',
+      });
+      currentTime += repDur;
+    }
+
+    // 3. Ensure celebratory outro with high fives and laughter
+    const hasOutro = normalizedSections.some((s) => s.type === 'outro');
+    if (!hasOutro || currentTime < minTarget) {
+      const outroDur = Math.max(5, minTarget - currentTime);
+      normalizedSections.push({
+        type: 'outro',
+        title: 'Celebration Finale',
+        startSec: currentTime,
+        endSec: currentTime + outroDur,
+        durationSec: outroDur,
+        lyrics: `Yay! Sing and dance again with ${idea.characters.slice(0, 2).join(' and ')}! High five!`,
+        rhymeScheme: 'outro',
+        leadCharacter: idea.characters[0] || 'Leo',
+        choreography: ['WAVE', 'CLAP'],
+        sfxCue: 'applause',
+      });
+      currentTime += outroDur;
+    }
+
+    const totalDur = currentTime;
 
     return {
       title: raw.title || idea.title,

@@ -62,14 +62,14 @@ export class NeuralSingingProvider implements SingingProvider {
             voice: voiceName,
             lang: 'en-US',
             outputFormat: 'audio-24khz-48kbitrate-mono-mp3',
-            rate: '+6%', // Energetic, child-friendly cadence
+            rate: '-2%', // Clear, unhurried preschool singing tempo
             pitch: pitchOffset,
           });
 
           await tts.ttsPromise(sectionText, sectionAudioPath);
           let duration = await ffmpegService.getMediaDuration(sectionAudioPath);
           if (!duration || duration <= 0) {
-            duration = section.durationSec || 5;
+            duration = section.durationSec || 6;
           }
 
           tempSectionFiles.push({ path: sectionAudioPath, duration, section });
@@ -107,16 +107,48 @@ export class NeuralSingingProvider implements SingingProvider {
 
     // Concatenate all vocal sections into a single synchronized vocal track
     const combinedVocalPath = path.join(tmpDir, `nursery_vocals_${Date.now()}.mp3`);
+    const targetDuration = Math.max(42, Number(lyrics.totalDurationSeconds) || 45);
+
     if (tempSectionFiles.length > 0) {
-      const concatList = tempSectionFiles.map((f) => `file '${f.path.replace(/'/g, "'\\''")}'`).join('\n');
+      // Create silence spacer (0.5s) to allow musical breathing between sections
+      const spacerPath = path.join(tmpDir, `spacer_${Date.now()}.mp3`);
+      let hasSpacer = false;
+      try {
+        const { default: ffmpeg } = await import('fluent-ffmpeg');
+        await new Promise<void>((resolve) => {
+          ffmpeg()
+            .input('anullsrc=r=24000:cl=mono')
+            .inputFormat('lavfi')
+            .duration(0.5)
+            .audioCodec('libmp3lame')
+            .audioBitrate('192k')
+            .output(spacerPath)
+            .on('end', () => {
+              hasSpacer = true;
+              resolve();
+            })
+            .on('error', () => resolve())
+            .run();
+        });
+      } catch {}
+
+      const concatEntries: string[] = [];
+      for (let sIdx = 0; sIdx < tempSectionFiles.length; sIdx++) {
+        concatEntries.push(`file '${tempSectionFiles[sIdx].path.replace(/'/g, "'\\''")}'`);
+        if (hasSpacer && sIdx < tempSectionFiles.length - 1) {
+          concatEntries.push(`file '${spacerPath.replace(/'/g, "'\\''")}'`);
+        }
+      }
+
       const concatTxtPath = path.join(tmpDir, `vocal_concat_${Date.now()}.txt`);
-      await fs.promises.writeFile(concatTxtPath, concatList);
+      await fs.promises.writeFile(concatTxtPath, concatEntries.join('\n'));
 
       await new Promise<void>((resolve, reject) => {
         import('fluent-ffmpeg').then(({ default: ffmpeg }) => {
           ffmpeg()
             .input(concatTxtPath)
             .inputOptions(['-f concat', '-safe 0'])
+            .audioFilters(`apad=whole_dur=${targetDuration.toFixed(2)}`)
             .audioCodec('libmp3lame')
             .audioBitrate('192k')
             .output(combinedVocalPath)
@@ -127,20 +159,34 @@ export class NeuralSingingProvider implements SingingProvider {
       });
 
       try {
-        await fs.promises.unlink(concatTxtPath);
+        await fs.promises.unlink(concatTxtPath).catch(() => {});
+        if (hasSpacer) await fs.promises.unlink(spacerPath).catch(() => {});
         for (const f of tempSectionFiles) {
           await fs.promises.unlink(f.path).catch(() => {});
         }
       } catch {}
     } else {
-      await fs.promises.writeFile(combinedVocalPath, Buffer.alloc(100));
+      // Generate silence track of targetDuration
+      const { default: ffmpeg } = await import('fluent-ffmpeg');
+      await new Promise<void>((resolve, reject) => {
+        ffmpeg()
+          .input('anullsrc=r=24000:cl=mono')
+          .inputFormat('lavfi')
+          .duration(targetDuration)
+          .audioCodec('libmp3lame')
+          .audioBitrate('192k')
+          .output(combinedVocalPath)
+          .on('end', () => resolve())
+          .on('error', (err) => reject(err))
+          .run();
+      });
     }
 
-    const finalDuration = (await ffmpegService.getMediaDuration(combinedVocalPath)) || cumulativeTime;
+    const finalDuration = (await ffmpegService.getMediaDuration(combinedVocalPath)) || targetDuration;
 
     return {
       vocalAudioPath: combinedVocalPath,
-      totalDurationSeconds: finalDuration,
+      totalDurationSeconds: Math.max(finalDuration, targetDuration),
       sectionTimings,
     };
   }
