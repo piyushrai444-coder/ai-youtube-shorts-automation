@@ -27,9 +27,9 @@ export class VideoService {
     const workDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'yt_short_build_'));
 
     try {
-      // Check audio mode: 'instrumental' (default for high-vibe tech shorts) vs 'voiceover' / 'both'
+      // Check audio mode: 'both' (default for high-retention viral tech shorts) vs 'voiceover' / 'instrumental'
       const dbAudioMode = await settingRepository.get('audio_mode');
-      const audioMode = (dbAudioMode || config.audio?.mode || 'instrumental').toLowerCase() as
+      const audioMode = (dbAudioMode || config.audio?.mode || 'both').toLowerCase() as
         | 'instrumental'
         | 'voiceover'
         | 'both';
@@ -39,7 +39,7 @@ export class VideoService {
       let musicTrackPath: string | undefined;
 
       if (audioMode === 'instrumental') {
-        // High-retention fast-paced 24-second instrumental tech Short (4 scenes x 6s)
+        // Fast-paced 24-second instrumental tech Short (4 scenes x 6s)
         totalDuration = 24.0;
         const selectedTrack = instrumentalMusicService.selectTrack(script.category);
         musicTrackPath = selectedTrack.filePath;
@@ -49,7 +49,7 @@ export class VideoService {
         await fs.promises.copyFile(selectedTrack.filePath, audioPath);
         logger.job(
           jobId || 'sys',
-          `Using high-energy instrumental soundtrack: "${selectedTrack.title}" (${totalDuration}s)`
+          `Using instrumental soundtrack: "${selectedTrack.title}" (${totalDuration}s)`
         );
       } else {
         // 1. Generate Voiceover via TTS
@@ -58,11 +58,15 @@ export class VideoService {
         await fs.promises.writeFile(audioPath, voiceover.audioBuffer);
         totalDuration = voiceover.durationSeconds;
 
-        const musicPath = path.resolve(process.cwd(), 'public/audio/ambient_tech.mp3');
-        const dbMusic = await settingRepository.get('enable_background_music');
-        const enableMusic = dbMusic !== null ? dbMusic === 'true' : fs.existsSync(musicPath);
-        if (enableMusic && fs.existsSync(musicPath)) {
-          musicTrackPath = musicPath;
+        if (audioMode === 'both') {
+          const selectedTrack = instrumentalMusicService.selectTrack(script.category);
+          if (fs.existsSync(selectedTrack.filePath)) {
+            musicTrackPath = selectedTrack.filePath;
+            logger.job(
+              jobId || 'sys',
+              `Selected background music: "${selectedTrack.title}" (${selectedTrack.filePath})`
+            );
+          }
         }
       }
 
@@ -70,7 +74,7 @@ export class VideoService {
       const subtitlesPath = path.join(workDir, 'captions.srt');
       await SubtitleGenerator.writeSrtFile(script.fullScript, totalDuration, subtitlesPath);
 
-      // 3. Generate Visual Scenes (3D Pixar / High-Tech scenes via PollinationsVisualProvider)
+      // 3. Generate Visual Scenes (Glassmorphic Tech Mockups via TechVisualProvider)
       const { sceneImages, tempDir: sceneTempDir } = await visualService.generateScenes(
         script,
         totalDuration,
@@ -90,9 +94,10 @@ export class VideoService {
           sceneImages,
           voiceoverAudioPath: audioMode !== 'instrumental' ? audioPath : undefined,
           backgroundMusicPath: musicTrackPath,
-          enableMusic: true,
+          enableMusic: Boolean(musicTrackPath),
           audioMode,
-          burnSubtitles: audioMode !== 'instrumental', // In instrumental mode, glassmorphic UI cards contain the text
+          subtitlesPath,
+          burnSubtitles: false, // Glassmorphic UI cards already contain stylized typography
           outputPath: outputVideoPath,
           totalDuration,
         },

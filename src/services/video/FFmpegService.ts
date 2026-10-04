@@ -160,7 +160,7 @@ export class FFmpegService {
       const fadeOutStart = Math.max(0, options.totalDuration - 1.5).toFixed(2);
 
       if (hasVoiceover && hasMusic) {
-        const audioFilter = `[1:a]volume=1.0[v_audio];[2:a]volume=0.12[m_audio];[v_audio][m_audio]amix=inputs=2:duration=first:dropout_transition=2[out_audio]`;
+        const audioFilter = `[1:a]volume=1.0[v_audio];[2:a]volume=0.10,afade=t=out:st=${fadeOutStart}:d=1.5[m_audio];[v_audio][m_audio]amix=inputs=2:duration=first:dropout_transition=2:normalize=0[out_audio]`;
         command.complexFilter([audioFilter]).outputOptions(['-map 0:v', '-map [out_audio]']);
       } else if (hasVoiceover) {
         command.outputOptions(['-map 0:v', '-map 1:a']);

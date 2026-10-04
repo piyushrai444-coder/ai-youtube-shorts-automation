@@ -4,6 +4,7 @@ import os from 'os';
 import { VisualProvider, VisualScene, VisualResult } from './VisualProvider.js';
 import { CanvasVisualProvider, canvasVisualProvider } from './CanvasVisualProvider.js';
 import { PollinationsVisualProvider, pollinationsVisualProvider } from './PollinationsVisualProvider.js';
+import { TechVisualProvider, techVisualProvider } from './TechVisualProvider.js';
 import { GeneratedScript } from '../../types/index.js';
 import { logger } from '../../utils/logger.js';
 import { config } from '../../config/index.js';
@@ -19,11 +20,14 @@ export class VisualService {
   async getEffectiveProvider(): Promise<VisualProvider> {
     if (this.customProvider) return this.customProvider;
     const dbProvider = await settingRepository.get('visual_provider');
-    const providerName = (dbProvider || config.visual.provider || 'pollinations').toLowerCase();
+    const providerName = (dbProvider || config.visual.provider || 'tech_mockup').toLowerCase();
     if (providerName === 'canvas') {
       return canvasVisualProvider;
     }
-    return pollinationsVisualProvider;
+    if (providerName === 'pollinations') {
+      return pollinationsVisualProvider;
+    }
+    return techVisualProvider;
   }
 
   async generateScenes(
