@@ -49,30 +49,67 @@
             </h2>
             <p class="text-xs text-slate-400 mt-0.5">Choose which content engine creates your automated YouTube Shorts.</p>
           </div>
-          <span class="px-2.5 py-1 text-xs font-bold rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 uppercase">
-            Active: <%= settings.db['content_mode'] || 'cartoon' %>
+          <span class="px-2.5 py-1 text-xs font-bold rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 uppercase">
+            Active: <%= settings.db['content_mode'] || 'ai_tools' %>
           </span>
         </div>
 
         <div>
           <label class="block text-xs font-semibold text-slate-300 mb-1">Select Channel Focus</label>
-          <select name="contentMode" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm font-medium focus:outline-none focus:border-pink-500">
-            <option value="nursery_rhymes" <%= (settings.db['content_mode'] || 'nursery_rhymes') === 'nursery_rhymes' ? 'selected' : '' %>>
-              🧸 AI Nursery Rhymes & Kids Songs Factory (Original 3D Preschool Music Videos, Songs, Choreography) [Active]
+          <select name="contentMode" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm font-medium focus:outline-none focus:border-cyan-500">
+            <option value="ai_tools" <%= (settings.db['content_mode'] || 'ai_tools') === 'ai_tools' ? 'selected' : '' %>>
+              🤖 AI Tools &amp; Technology Radar (3D Pixar/Tech Visuals, Instrumental Music, Educational Tech Shorts) [Recommended]
             </option>
-            <option value="cartoon" <%= (settings.db['content_mode'] || 'nursery_rhymes') === 'cartoon' ? 'selected' : '' %>>
+            <option value="nursery_rhymes" <%= (settings.db['content_mode'] || 'ai_tools') === 'nursery_rhymes' ? 'selected' : '' %>>
+              🧸 AI Nursery Rhymes &amp; Kids Songs Factory (Original 3D Preschool Music Videos, Songs, Choreography)
+            </option>
+            <option value="cartoon" <%= (settings.db['content_mode'] || 'ai_tools') === 'cartoon' ? 'selected' : '' %>>
               🎨 AI Cartoon Shorts Factory (Original 3D Animated Stories, 30-45s)
             </option>
-            <option value="ai_tools" <%= (settings.db['content_mode'] || 'nursery_rhymes') === 'ai_tools' ? 'selected' : '' %>>
-              🤖 AI Tools & Technology Radar (Tech demonstrations & software discoveries)
-            </option>
-            <option value="hybrid" <%= (settings.db['content_mode'] || 'nursery_rhymes') === 'hybrid' ? 'selected' : '' %>>
-              ⚡ Hybrid Mode (Morning: Nursery Rhymes, Evening: Cartoons)
+            <option value="hybrid" <%= (settings.db['content_mode'] || 'ai_tools') === 'hybrid' ? 'selected' : '' %>>
+              ⚡ Hybrid Mode (Morning: AI Tools, Evening: Cartoons)
             </option>
           </select>
           <p class="text-[11px] text-slate-400 mt-2">
-            In Nursery Rhymes mode, the system creates 100% original preschool learning songs with 3D animal characters (Leo, Mia, Toby, Ella, Owl), beat-synchronized dancing, karaoke subtitles, and COPPA Made-for-Kids compliance.
+            In AI Tools mode, the system automatically researches breakthrough AI discoveries, generates 3D Pixar/Disney style characters and tech scenes, applies modern glassmorphic HUD overlays, and syncs high-energy instrumental music.
           </p>
+        </div>
+      </div>
+
+      <!-- Visual & Audio Production Engine -->
+      <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6">
+        <h2 class="text-base font-bold text-white mb-1">Visual &amp; Audio Style Configuration</h2>
+        <p class="text-xs text-slate-400 mb-4">Configure free 3D visual generation and instrumental soundtrack settings.</p>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Visual Rendering Engine</label>
+            <select name="visualProvider" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:outline-none focus:border-cyan-500">
+              <option value="pollinations" <%= (settings.db['visual_provider'] || 'pollinations') === 'pollinations' ? 'selected' : '' %>>
+                🎨 3D Pixar / High-Tech AI Scenes (Pollinations/Flux - Free) [Recommended]
+              </option>
+              <option value="canvas" <%= (settings.db['visual_provider'] || 'pollinations') === 'canvas' ? 'selected' : '' %>>
+                📐 Pure SVG &amp; Cyber Glassmorphism (Fast &amp; Offline)
+              </option>
+            </select>
+            <p class="text-[11px] text-slate-400 mt-1">Generates eye-catching 3D Pixar/Disney style characters and futuristic holographic UI.</p>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Audio &amp; Soundtrack Mode</label>
+            <select name="audioMode" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:outline-none focus:border-cyan-500">
+              <option value="instrumental" <%= (settings.db['audio_mode'] || 'instrumental') === 'instrumental' ? 'selected' : '' %>>
+                🎵 High-Energy Tech Instrumental Music Only (No voiceover - Recommended)
+              </option>
+              <option value="voiceover" <%= (settings.db['audio_mode'] || 'instrumental') === 'voiceover' ? 'selected' : '' %>>
+                🎙️ Spoken Voiceover Narration Only
+              </option>
+              <option value="both" <%= (settings.db['audio_mode'] || 'instrumental') === 'both' ? 'selected' : '' %>>
+                ⚡ Both (Voiceover + Low Volume Background Music)
+              </option>
+            </select>
+            <p class="text-[11px] text-slate-400 mt-1">Instrumental mode syncs driving synthwave and cyber beats with animated on-screen cards.</p>
+          </div>
         </div>
       </div>
 

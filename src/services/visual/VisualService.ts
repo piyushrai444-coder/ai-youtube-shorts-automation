@@ -3,14 +3,27 @@ import path from 'path';
 import os from 'os';
 import { VisualProvider, VisualScene, VisualResult } from './VisualProvider.js';
 import { CanvasVisualProvider, canvasVisualProvider } from './CanvasVisualProvider.js';
+import { PollinationsVisualProvider, pollinationsVisualProvider } from './PollinationsVisualProvider.js';
 import { GeneratedScript } from '../../types/index.js';
 import { logger } from '../../utils/logger.js';
+import { config } from '../../config/index.js';
+import { settingRepository } from '../../repositories/SettingRepository.js';
 
 export class VisualService {
-  private provider: VisualProvider;
+  private customProvider?: VisualProvider;
 
   constructor(customProvider?: VisualProvider) {
-    this.provider = customProvider || canvasVisualProvider;
+    this.customProvider = customProvider;
+  }
+
+  async getEffectiveProvider(): Promise<VisualProvider> {
+    if (this.customProvider) return this.customProvider;
+    const dbProvider = await settingRepository.get('visual_provider');
+    const providerName = (dbProvider || config.visual.provider || 'pollinations').toLowerCase();
+    if (providerName === 'canvas') {
+      return canvasVisualProvider;
+    }
+    return pollinationsVisualProvider;
   }
 
   async generateScenes(
@@ -18,7 +31,8 @@ export class VisualService {
     totalDurationSeconds: number,
     jobId?: string
   ): Promise<{ sceneImages: { imagePath: string; duration: number }[]; tempDir: string }> {
-    logger.job(jobId || 'sys', `Generating 4 vertical visuals for ${totalDurationSeconds.toFixed(2)}s video using ${this.provider.name}`);
+    const provider = await this.getEffectiveProvider();
+    logger.job(jobId || 'sys', `Generating 4 vertical visuals for ${totalDurationSeconds.toFixed(2)}s video using ${provider.name}`);
 
     // Calculate word counts to distribute scene durations accurately
     const hookWords = script.hook.split(/\s+/).length;
@@ -95,7 +109,7 @@ export class VisualService {
       },
     ];
 
-    const results = await this.provider.generateVisuals(scenes);
+    const results = await provider.generateVisuals(scenes);
 
     const tempDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'yt_scenes_'));
     const sceneImages: { imagePath: string; duration: number }[] = [];

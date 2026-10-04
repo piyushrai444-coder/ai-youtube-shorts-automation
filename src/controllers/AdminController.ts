@@ -408,6 +408,8 @@ export class AdminController {
         watermarkText,
         defaultCta,
         contentMode,
+        visualProvider,
+        audioMode,
         short1Time,
         short2Time,
         llmProvider,
@@ -423,6 +425,8 @@ export class AdminController {
       if (watermarkText) await settingRepository.set('watermark_text', watermarkText);
       if (defaultCta) await settingRepository.set('default_cta', defaultCta);
       if (contentMode) await settingRepository.set('content_mode', contentMode);
+      if (visualProvider) await settingRepository.set('visual_provider', visualProvider);
+      if (audioMode) await settingRepository.set('audio_mode', audioMode);
       if (short1Time) await settingRepository.set('short_1_time', short1Time);
       if (short2Time) await settingRepository.set('short_2_time', short2Time);
       if (llmProvider) await settingRepository.set('llm_provider', llmProvider);

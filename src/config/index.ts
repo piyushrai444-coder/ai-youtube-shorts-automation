@@ -51,8 +51,13 @@ export const config = {
   },
 
   visual: {
-    provider: (process.env.VISUAL_PROVIDER || 'canvas').toLowerCase(),
+    provider: (process.env.VISUAL_PROVIDER || 'pollinations').toLowerCase(),
     apiKey: process.env.VISUAL_API_KEY || '',
+  },
+
+  audio: {
+    mode: (process.env.AUDIO_MODE || 'instrumental').toLowerCase() as 'instrumental' | 'voiceover' | 'both',
+    enableMusic: process.env.ENABLE_BACKGROUND_MUSIC !== 'false',
   },
 
   storage: {
@@ -76,7 +81,7 @@ export const config = {
     channelName: process.env.CHANNEL_NAME || 'AI Daily Radar',
     watermarkText: process.env.WATERMARK_TEXT || '@AIDailyRadar',
     defaultCta: process.env.DEFAULT_CTA || 'Follow for daily breakthrough AI tools 🚀',
-    enableBackgroundMusic: process.env.ENABLE_BACKGROUND_MUSIC === 'true',
+    enableBackgroundMusic: process.env.ENABLE_BACKGROUND_MUSIC !== 'false',
   },
 
   ffmpeg: {
@@ -84,9 +89,9 @@ export const config = {
     ffprobePath: process.env.FFPROBE_PATH || '',
   },
 
-  contentMode: (process.env.CONTENT_MODE || 'nursery_rhymes').toLowerCase() as 'nursery_rhymes' | 'cartoon' | 'ai_tools' | 'hybrid',
+  contentMode: (process.env.CONTENT_MODE || 'ai_tools').toLowerCase() as 'nursery_rhymes' | 'cartoon' | 'ai_tools' | 'hybrid',
 
-  youtubeAudienceMode: (process.env.YOUTUBE_AUDIENCE_MODE || 'MADE_FOR_KIDS').toUpperCase() as 'MADE_FOR_KIDS' | 'GENERAL_AUDIENCE',
+  youtubeAudienceMode: (process.env.YOUTUBE_AUDIENCE_MODE || 'GENERAL_AUDIENCE').toUpperCase() as 'MADE_FOR_KIDS' | 'GENERAL_AUDIENCE',
 
   cartoon: {
     minDurationSeconds: parseInt(process.env.CARTOON_MIN_DURATION || '30', 10),

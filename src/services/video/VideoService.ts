@@ -7,6 +7,7 @@ import { visualService } from '../visual/VisualService.js';
 import { SubtitleGenerator } from './SubtitleGenerator.js';
 import { ffmpegService } from './FFmpegService.js';
 import { VideoValidator } from './VideoValidator.js';
+import { instrumentalMusicService } from '../audio/InstrumentalMusicService.js';
 import { logger } from '../../utils/logger.js';
 import { config } from '../../config/index.js';
 import { settingRepository } from '../../repositories/SettingRepository.js';
@@ -26,17 +27,50 @@ export class VideoService {
     const workDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'yt_short_build_'));
 
     try {
-      // 1. Generate Voiceover
-      const voiceover = await ttsService.generateVoiceover(script.fullScript, jobId);
-      const audioPath = path.join(workDir, 'voiceover.mp3');
-      await fs.promises.writeFile(audioPath, voiceover.audioBuffer);
-      const totalDuration = voiceover.durationSeconds;
+      // Check audio mode: 'instrumental' (default for high-vibe tech shorts) vs 'voiceover' / 'both'
+      const dbAudioMode = await settingRepository.get('audio_mode');
+      const audioMode = (dbAudioMode || config.audio?.mode || 'instrumental').toLowerCase() as
+        | 'instrumental'
+        | 'voiceover'
+        | 'both';
 
-      // 2. Generate Captions (.srt)
+      let audioPath: string;
+      let totalDuration: number;
+      let musicTrackPath: string | undefined;
+
+      if (audioMode === 'instrumental') {
+        // High-retention fast-paced 24-second instrumental tech Short (4 scenes x 6s)
+        totalDuration = 24.0;
+        const selectedTrack = instrumentalMusicService.selectTrack(script.category);
+        musicTrackPath = selectedTrack.filePath;
+
+        // Copy instrumental track to workDir for storage package
+        audioPath = path.join(workDir, 'soundtrack.mp3');
+        await fs.promises.copyFile(selectedTrack.filePath, audioPath);
+        logger.job(
+          jobId || 'sys',
+          `Using high-energy instrumental soundtrack: "${selectedTrack.title}" (${totalDuration}s)`
+        );
+      } else {
+        // 1. Generate Voiceover via TTS
+        const voiceover = await ttsService.generateVoiceover(script.fullScript, jobId);
+        audioPath = path.join(workDir, 'voiceover.mp3');
+        await fs.promises.writeFile(audioPath, voiceover.audioBuffer);
+        totalDuration = voiceover.durationSeconds;
+
+        const musicPath = path.resolve(process.cwd(), 'public/audio/ambient_tech.mp3');
+        const dbMusic = await settingRepository.get('enable_background_music');
+        const enableMusic = dbMusic !== null ? dbMusic === 'true' : fs.existsSync(musicPath);
+        if (enableMusic && fs.existsSync(musicPath)) {
+          musicTrackPath = musicPath;
+        }
+      }
+
+      // 2. Generate Captions (.srt) for YouTube metadata & accessibility
       const subtitlesPath = path.join(workDir, 'captions.srt');
       await SubtitleGenerator.writeSrtFile(script.fullScript, totalDuration, subtitlesPath);
 
-      // 3. Generate Visual Scenes
+      // 3. Generate Visual Scenes (3D Pixar / High-Tech scenes via PollinationsVisualProvider)
       const { sceneImages, tempDir: sceneTempDir } = await visualService.generateScenes(
         script,
         totalDuration,
@@ -49,20 +83,16 @@ export class VideoService {
         await fs.promises.copyFile(sceneImages[0].imagePath, thumbnailPath);
       }
 
-      // 4. Background Music (optional)
-      const musicPath = path.resolve(process.cwd(), 'public/audio/ambient_tech.mp3');
-      const dbMusic = await settingRepository.get('enable_background_music');
-      const enableMusic = dbMusic !== null ? dbMusic === 'true' : fs.existsSync(musicPath);
-
-      // 5. Render Video via FFmpeg
+      // 4. Render Video via FFmpeg
       const outputVideoPath = path.join(workDir, 'short_final.mp4');
       await ffmpegService.renderVideo(
         {
           sceneImages,
-          voiceoverAudioPath: audioPath,
-          subtitlesPath,
-          backgroundMusicPath: musicPath,
-          enableMusic,
+          voiceoverAudioPath: audioMode !== 'instrumental' ? audioPath : undefined,
+          backgroundMusicPath: musicTrackPath,
+          enableMusic: true,
+          audioMode,
+          burnSubtitles: audioMode !== 'instrumental', // In instrumental mode, glassmorphic UI cards contain the text
           outputPath: outputVideoPath,
           totalDuration,
         },

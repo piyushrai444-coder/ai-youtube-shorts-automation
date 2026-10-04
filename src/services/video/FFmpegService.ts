@@ -33,13 +33,15 @@ try {
 
 export interface RenderShortOptions {
   sceneImages: { imagePath: string; duration: number }[];
-  voiceoverAudioPath: string;
+  voiceoverAudioPath?: string;
   subtitlesPath?: string;
   backgroundMusicPath?: string;
   enableMusic?: boolean;
   outputPath: string;
   totalDuration: number;
   aspectRatio?: '9:16' | '16:9';
+  audioMode?: 'instrumental' | 'voiceover' | 'both';
+  burnSubtitles?: boolean;
 }
 
 export class FFmpegService {
@@ -105,20 +107,32 @@ export class FFmpegService {
       // Input 0: Image Concat List
       command.input(concatListPath).inputOptions(['-f concat', '-safe 0']);
 
-      // Input 1: Voiceover Audio
-      command.input(options.voiceoverAudioPath);
+      const hasVoiceover = Boolean(
+        options.voiceoverAudioPath &&
+        options.audioMode !== 'instrumental' &&
+        fs.existsSync(options.voiceoverAudioPath)
+      );
 
-      // Check if background music is enabled and available
-      const hasMusic = options.enableMusic && options.backgroundMusicPath && fs.existsSync(options.backgroundMusicPath);
-      if (hasMusic) {
-        // Input 2: Background Music (looped)
+      const hasMusic = Boolean(
+        options.backgroundMusicPath &&
+        fs.existsSync(options.backgroundMusicPath) &&
+        (options.enableMusic !== false || options.audioMode === 'instrumental')
+      );
+
+      if (hasVoiceover) {
+        // Input 1: Voiceover Audio
+        command.input(options.voiceoverAudioPath!);
+        if (hasMusic) {
+          // Input 2: Background Music (looped)
+          command.input(options.backgroundMusicPath!).inputOptions(['-stream_loop -1']);
+        }
+      } else if (hasMusic) {
+        // Instrumental Only Mode: Input 1 is Background Music (looped)
         command.input(options.backgroundMusicPath!).inputOptions(['-stream_loop -1']);
       }
 
       // Filter graph setup:
       // Video: scale/crop to exactly 1080x1920 (9:16), set 30fps
-      // Subtitles: if provided, burn into video
-      // Audio: mix voiceover + low volume background music
       const isLandscape = options.aspectRatio === '16:9';
       const targetWidth = isLandscape ? 1920 : 1080;
       const targetHeight = isLandscape ? 1080 : 1920;
@@ -132,27 +146,30 @@ export class FFmpegService {
         'format=yuv420p',
       ];
 
-      // Burn subtitles directly if available
-      if (options.subtitlesPath && fs.existsSync(options.subtitlesPath)) {
-        // Escape colon and backslashes for FFmpeg subtitles filter
+      // Burn subtitles directly if explicitly requested and file exists
+      if (options.burnSubtitles && options.subtitlesPath && fs.existsSync(options.subtitlesPath)) {
         const escapedSubPath = options.subtitlesPath
           .replace(/\\/g, '/')
           .replace(/:/g, '\\:');
         videoFilters.push(`subtitles='${escapedSubPath}':force_style='FontName=Arial,FontSize=24,Bold=1,PrimaryColour=&H0000FFFF,OutlineColour=&H00000000,BackColour=&H80000000,Outline=3,Shadow=2,Alignment=2,MarginV=${marginV}'`);
       }
 
-      let audioComplexFilter = '';
-      if (hasMusic) {
-        // Voiceover at full volume (volume=1.0), music attenuated (volume=0.10), mixed together
-        audioComplexFilter = '[1:a]volume=1.0[v_audio];[2:a]volume=0.10[m_audio];[v_audio][m_audio]amix=inputs=2:duration=first:dropout_transition=2[out_audio]';
-      }
-
       command.videoFilters(videoFilters);
 
-      if (hasMusic) {
-        command.complexFilter([audioComplexFilter]).outputOptions(['-map 0:v', '-map [out_audio]']);
-      } else {
+      // Audio Filter & Mapping
+      const fadeOutStart = Math.max(0, options.totalDuration - 1.5).toFixed(2);
+
+      if (hasVoiceover && hasMusic) {
+        const audioFilter = `[1:a]volume=1.0[v_audio];[2:a]volume=0.12[m_audio];[v_audio][m_audio]amix=inputs=2:duration=first:dropout_transition=2[out_audio]`;
+        command.complexFilter([audioFilter]).outputOptions(['-map 0:v', '-map [out_audio]']);
+      } else if (hasVoiceover) {
         command.outputOptions(['-map 0:v', '-map 1:a']);
+      } else if (hasMusic) {
+        // Pure instrumental music with smooth fade-in and fade-out
+        const audioFilter = `[1:a]volume=0.90,afade=t=in:ss=0:d=0.8,afade=t=out:st=${fadeOutStart}:d=1.5[out_audio]`;
+        command.complexFilter([audioFilter]).outputOptions(['-map 0:v', '-map [out_audio]']);
+      } else {
+        command.outputOptions(['-map 0:v']);
       }
 
       command
