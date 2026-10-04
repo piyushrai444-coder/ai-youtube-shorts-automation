@@ -131,9 +131,12 @@ export class EnvironmentManager {
 
   async incrementUsage(name: string): Promise<void> {
     try {
+      await this.ensureSeeded();
       const dbEnv = await environmentRepository.findByName(name);
       if (dbEnv) {
-        await environmentRepository.incrementUsage(dbEnv.id);
+        await environmentRepository.incrementUsage(dbEnv.name);
+      } else {
+        await environmentRepository.incrementUsage(name);
       }
     } catch {}
   }

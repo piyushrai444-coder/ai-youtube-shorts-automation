@@ -38,11 +38,17 @@ export class EnvironmentRepository {
     });
   }
 
-  async incrementUsage(name: string): Promise<void> {
-    await prisma.environment.update({
-      where: { name },
-      data: { usageCount: { increment: 1 } },
-    }).catch(() => {});
+  async incrementUsage(nameOrId: string): Promise<void> {
+    try {
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(nameOrId);
+      const where = isUuid ? { id: nameOrId } : { name: nameOrId };
+      const existing = await prisma.environment.findFirst({ where });
+      if (!existing) return;
+      await prisma.environment.update({
+        where: { id: existing.id },
+        data: { usageCount: { increment: 1 } },
+      });
+    } catch {}
   }
 }
 

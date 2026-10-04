@@ -57,13 +57,21 @@ export class CharacterRepository {
     });
   }
 
-  async incrementAppearance(id: string): Promise<Character> {
-    return prisma.character.update({
-      where: { id },
-      data: {
-        appearanceCount: { increment: 1 },
-      },
-    });
+  async incrementAppearance(idOrName: string): Promise<Character | null> {
+    try {
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idOrName);
+      const where = isUuid ? { id: idOrName } : { name: idOrName };
+      const existing = await prisma.character.findFirst({ where });
+      if (!existing) return null;
+      return await prisma.character.update({
+        where: { id: existing.id },
+        data: {
+          appearanceCount: { increment: 1 },
+        },
+      });
+    } catch {
+      return null;
+    }
   }
 
   async updatePerformance(id: string, newRetention: number, newViews: number): Promise<Character> {
